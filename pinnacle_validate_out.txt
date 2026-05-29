@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+=== PINNACLE CANDIDATE 3 VALIDATION ===
+[PASS] All pinnacle exports successful
+[PASS] Model created: 2.40M params (tiled)
+VALIDATION FAILED: RuntimeError : max(): Expected reduction dim to be specified for input.numel() == 0. Specify the reduction dim with the 'dim' argument.
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\pinnacle_validate.py", line 20, in <module>
+    state = model.get_final_state(x, with_manifold_checks=True)
+  File "C:\Users\varsh\AppData\Roaming\Python\Python314\site-packages\torch\utils\_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\model.py", line 290, in get_final_state
+    final_h = comp.get_final_state(x_hyp, with_manifold_checks=with_manifold_checks)
+  File "C:\Users\varsh\AppData\Roaming\Python\Python314\site-packages\torch\utils\_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 393, in get_final_state
+    _, h_prev = self._process_tile_vectorized(tile, h_prev)
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 517, in _process_tile_vectorized_impl
+    h_next = _stable_lorentz_normalize(ambient)
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 159, in _stable_lorentz_normalize
+    out, _ = project_to_manifold(out, eps=eps, max_violation_tol=1e-4, repair=True)
+             ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\hyperbolic_ops.py", line 293, in project_to_manifold
+    max_viol = violations.max().item()
+               ~~~~~~~~~~~~~~^^
+RuntimeError: max(): Expected reduction dim to be specified for input.numel() == 0. Specify the reduction dim with the 'dim' argument.

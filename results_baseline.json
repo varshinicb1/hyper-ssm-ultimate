@@ -1,0 +1,20 @@
+[
+  {
+    "tag": "Transformer-40M  (O(N) KV-Cache)",
+    "params_M": 35.73,
+    "avg_loss": 4.3581,
+    "final_loss": 0.4526,
+    "throughput_tok_s": 10216.9,
+    "peak_vram_mb": 1381.9,
+    "wall_sec": 8.02
+  },
+  {
+    "tag": "Hyper-SSM-40M    (O(1) Geometric)",
+    "params_M": 40.43,
+    "avg_loss": 4.9715,
+    "final_loss": 0.8672,
+    "throughput_tok_s": 186.7,
+    "peak_vram_mb": 840.9,
+    "wall_sec": 438.8
+  }
+]

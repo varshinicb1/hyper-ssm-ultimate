@@ -1,0 +1,51 @@
+{
+  "run_name": null,
+  "args": {
+    "epochs": 1,
+    "batch": 2,
+    "seq_len": 64,
+    "lr": 0.0003,
+    "hidden_size": 64,
+    "num_layers": 4,
+    "attention_every_n": 4,
+    "weight_decay": 0.01,
+    "use_tiled": false,
+    "use_rust_accel": false,
+    "max_steps": 3,
+    "warmup_steps": 200,
+    "grad_accum": 2,
+    "amp": true,
+    "precision": "auto",
+    "autotune_compile": true,
+    "compile_model": false,
+    "log_interval": 1,
+    "seed": 42,
+    "eval_interval": 400,
+    "save_interval": 1000,
+    "run_name": null,
+    "resume": null,
+    "checkpoint": null
+  },
+  "system": {
+    "python": "3.14.3",
+    "platform": "Windows-11-10.0.26100-SP0",
+    "torch": "2.11.0+cpu",
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_version": null,
+    "cpu_count": 16,
+    "git_commit": null
+  },
+  "model_params": 5482072,
+  "precision_policy": "auto",
+  "autocast_dtype": "torch.float32",
+  "use_tiled": false,
+  "autotune_report": {
+    "model": "available_via_model.compile_model()",
+    "compressor": "skipped"
+  },
+  "start_time": "2026-05-29T23:22:03.578797+00:00",
+  "torch_compile_disabled": false,
+  "end_time": "2026-05-29T23:22:05.023596+00:00",
+  "final_step": 3
+}

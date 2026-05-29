@@ -1,0 +1,24 @@
+C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\cuda_ops.py:35: UserWarning: [hyper_ssm.cuda_ops] CUDA extension 'hyper_ssm_cuda' not found. Falling back to pure PyTorch implementations. Build it with: python compile_cuda.py build_ext --inplace
+Import error: No module named 'hyper_ssm_cuda'
+  warnings.warn(
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (10514492 > 1024). Running this sequence through the model will result in indexing errors
+[SYSTEM] Using pure PyTorch Riemannian ops (CUDA extension not loaded)
+[ULTIMATE] Production training on device: cpu
+[ULTIMATE] PyTorch 2.11.0+cpu | CUDA available: False
+[Tokenizer] Custom BPE cache not found. Flowing back to GPT-2 HuggingFace Vocab...
+[DATA] Loading C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\data\c_corpus.txt ...
+[DATA] Corpus: 20,445,271 chars (20.45 MB)
+[DATA] Tokens: 10,514,492
+[MODEL] Hybrid Hyper-SSM Ultimate | 5.48M params | layers=4
+[AUTOTUNE] Starting production compile autotune (this takes 5-20s once)...
+[AMP] POLICY=auto | enabled=False dtype=torch.float32 | autotune=True
+[MANIFEST] Saved rich experiment manifest -> C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\logs\None_manifest.json
+[TRAIN] Starting at step 0 | max_steps=3 | accum=2 | precision=auto
+[STEP 000000] LM=10.8663 Hyp=0.0000 Ent=5.510 LR=1.50e-06 Total=21.6365 tps=0
+[STEP 000001] LM=10.8629 Hyp=0.0000 Ent=5.509 LR=3.00e-06 Total=21.5449 tps=515
+[STEP 000002] LM=10.8202 Hyp=0.0000 Ent=5.507 LR=4.50e-06 Total=21.5825 tps=532
+[TRAIN] Reached max_steps=3. Stopping cleanly.
+[MANIFEST] Saved rich experiment manifest -> C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\logs\None_manifest.json
+[CKPT] Atomic save complete -> C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\checkpoints\None_last.pt
+[ULTIMATE] Training complete. Final step=3
+         Checkpoints: C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\checkpoints\None_last.pt  (and best if improved)

@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+Direct compressor test...
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\direct_comp_test.py", line 11, in <module>
+Input prepared torch.Size([1, 16, 65])
+FAILED: RuntimeError The size of tensor a (8) must match the size of tensor b (0) at non-singleton dimension 2
+    fs = comp.get_final_state(x, with_manifold_checks=True)
+  File "C:\Users\varsh\AppData\Roaming\Python\Python314\site-packages\torch\utils\_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 393, in get_final_state
+    _, h_prev = self._process_tile_vectorized(tile, h_prev)
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 538, in _process_tile_vectorized_impl
+    tile_out = _stable_lorentz_normalize(mixed)
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 159, in _stable_lorentz_normalize
+    out, _ = project_to_manifold(out, eps=eps, max_violation_tol=1e-4, repair=True)
+             ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\hyperbolic_ops.py", line 295, in project_to_manifold
+    inner = lorentz_inner(h_f, h_f, keepdim=False)
+  File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\hyperbolic_ops.py", line 248, in lorentz_inner
+    res = torch.sum(prod, dim=-1, keepdim=keepdim) - 2 * prod[..., 0:1 if keepdim else 0]
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (8) must match the size of tensor b (0) at non-singleton dimension 2

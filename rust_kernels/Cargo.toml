@@ -1,0 +1,46 @@
+[package]
+name = "hyper_ssm_rust_kernels"
+version = "2026.1.0"
+edition = "2021"
+authors = ["Hyper-SSM Team 2026"]
+description = "Production-grade high-performance Rust implementation of Hyper-SSM Lorentzian Tiled Fractal Compressor. CPU reference (rayon) + PyO3 Python bindings + cuda-oxide ready skeletons."
+license = "Apache-2.0"
+repository = "https://github.com/your-org/hyper-ssm"
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Core high-performance
+rayon = "1.10"
+ndarray = { version = "0.15", features = ["rayon"] }
+
+# Python interop (maturin + PyO3 is the 2026 standard for shipping Rust accel to PyTorch users)
+pyo3 = { version = "0.21", features = ["extension-module", "num-complex"], optional = true }
+numpy = { version = "0.21", optional = true }
+
+# Optional real CUDA support via mature cudarc (real working path in 2026, alternative to hypothetical cuda-oxide)
+# Enable with: cargo build --features cuda
+cudarc = { version = "0.11", features = ["driver", "nvrtc", "f16"], optional = true }
+
+# cuda-oxide support (kept for forward compatibility when NVlabs ships production bits)
+# When real cuda-oxide lands, add the deps under this feature and implement #[kernel] versions.
+# cuda-core = { git = "https://github.com/NVlabs/cuda-oxide", branch = "main", optional = true }
+# etc.
+
+[features]
+default = []                       # Pure Rust (rayon + ndarray) always works - ideal for cargo run / cargo check
+pyo3 = ["dep:pyo3", "dep:numpy"]   # Enable only when doing maturin develop/build for Python bindings
+cuda = ["cudarc"]
+cuda-oxide = []   # Placeholder for future NV cuda-oxide kernels (see kernels.rs)
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = false
+panic = "abort"
+
+[profile.dev]
+opt-level = 0

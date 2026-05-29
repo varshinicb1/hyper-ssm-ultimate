@@ -1,0 +1,29 @@
+C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\full_pinnacle_val.py:37: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:837.)
+  print(f"[PASS] Manifold check: viol={float(v):.2e}")
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0] Graph break from `Tensor.item()`, consider setting:
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]     torch._dynamo.config.capture_scalar_outputs = True
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0] or:
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]     env TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0] to include these operations in the captured graph.
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0] 
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0] Graph break: from user code at:
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]   File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 517, in _process_tile_vectorized_impl
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]     h_next = _stable_lorentz_normalize(ambient)
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]   File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\tiled_compressor.py", line 159, in _stable_lorentz_normalize
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]     out, _ = project_to_manifold(out, eps=eps, max_violation_tol=1e-4, repair=True)
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]   File "C:\Users\varsh\OneDrive\Documents\6THSEM\LLM-NEW\hyper_ssm\hyperbolic_ops.py", line 304, in project_to_manifold
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0]     max_viol = violations.max().item() if violations.dim() > 0 else float(violations.item())
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0] 
+W0530 04:50:56.593000 22336 torch\_dynamo\variables\tensor.py:1379] [0/0] 
+=== PINNACLE CANDIDATE 3 FULL VALIDATION ===
+[PASS] All pinnacle exports successful
+[PASS] Model created: 2.40M params (tiled)
+[PASS] get_final_state: using_tiled=True
+[PASS] update_state: logits shape torch.Size([1, 1000])
+[PASS] generate_efficient: len=21
+[PASS] PerformanceCounters: calls=16, best=None
+[PASS] Manifold check: viol=0.00e+00
+[PASS] Autotune: winner=eager
+
+=== ALL PINNACLE VALIDATIONS PASSED ===

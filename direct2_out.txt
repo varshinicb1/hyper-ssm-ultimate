@@ -1,0 +1,4 @@
+Direct compressor test (post-fix)...
+Input prepared torch.Size([1, 16, 65])
+SUCCESS get_final_state torch.Size([1, 65])
+Report calls: 1
