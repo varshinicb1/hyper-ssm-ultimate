@@ -1,63 +1,165 @@
-# Hyper-SSM Ultimate (2026)
+# Hyper-SSM Ultimate
 
-**The best-integrated version of Hyper-SSM: Lorentzian Fractal State Compression + Liquid Experts + Hybrid Recall Attention**
+**Lorentzian Fractal State-Space Models with Liquid Experts and Hybrid Recall Attention**
 
-This repository contains the 2026 "Ultimate" realization of the original Hyper-SSM vision, fully updated with the latest research and production insights as of May 2026.
+An advanced research artifact exploring geometric alternatives to the Transformer KV-cache, combining exact Lorentzian manifold recurrence for constant-memory state with hypernetwork-synthesized dynamic experts.
 
-## Core Idea (Still Unique and Powerful)
+**Repository:** [github.com/varshinicb1/hyper-ssm-ultimate](https://github.com/varshinicb1/hyper-ssm-ultimate)
 
-Replace the quadratic KV-cache and static parameters of Transformers with:
+---
 
-1. **Lorentzian Fractal State Compressor** — Recursive folding of sequence history into fixed-size hyperbolic state (O(1) memory).
-2. **Liquid Mixture-of-Experts** — A small hypernetwork dynamically synthesizes transient expert weights on every forward pass.
-3. **Hybrid Recall Layers** (new in Ultimate) — Occasional high-quality attention layers for precise retrieval (following NVIDIA Nemotron 3 philosophy).
+## Current Status (Honest)
 
-## Major 2026 Upgrades
+This repository contains a **significantly hardened and productionized research prototype** developed in May 2026.
 
-- **Hybrid Architecture** — Geometric compressor for most layers + selective attention for recall (best of both worlds).
-- **Hyperbolic Structural Losses** — Centripetal + clustering losses (inspired by HiM, arXiv:2505.18973).
-- **Modern Tooling**:
-  - Centralized CUDA Riemannian ops (`hyper_ssm/cuda_ops.py`)
-  - `torch.compile`-friendly compressor
-  - cuTile-inspired tiled compressor prototype
-  - Explicit path for **NVIDIA cuda-oxide** (Rust → PTX, released May 2026)
-- Clean, reproducible, well-documented codebase.
+**What has been built:**
+- A complete, modular Python implementation of the core architecture.
+- A high-performance `TiledFractalCompressor` with heavy vectorization, `torch.compile` support, and numerical stability across precisions.
+- A real (not sketched) Rust implementation with PyO3 interop for the compressor logic.
+- A modern, robust training infrastructure capable of long experiments.
+- Clean hybrid architecture (geometric state + selective attention recall layers).
 
-## Key Files
+**What this is not (yet):**
+- A fully trained large-scale model with published benchmark numbers against Llama-3 / Qwen / Nemotron equivalents.
+- A drop-in production inference library.
+- A finished research paper with rigorous ablations and scaling curves.
 
-- `HYPER_SSM_2026_ULTIMATE.md` — The full integrated vision and roadmap
-- `hyper_ssm/model.py` — `HyperSSM` with `use_hybrid=True` support + `HybridHyperSSMBlock`
-- `hyper_ssm/hyperbolic_loss.py` — HiM-style losses
-- `training/train_hybrid_ultimate.py` — Recommended training script
-- `rust_kernels/` — cuda-oxide integration skeleton
-- `hyper_ssm/tiled_compressor.py` — cuTile-inspired optimization direction
+The goal of this repository is to provide a high-quality, honest, and extensible foundation for continued research in this direction.
 
-## Quick Start
+---
+
+## What Exists in the Repository Today
+
+### Core Architecture (`hyper_ssm/`)
+- `HybridHyperSSM` and `HybridHyperSSMBlock`: Full hybrid model supporting both pure geometric and geometric + selective attention modes.
+- `TiledFractalCompressor`: The flagship production-grade compressor (cuTile-inspired tiling, aggressive vectorization inside tiles, `torch.compile` with robust fallbacks, `get_final_state` + `update_state` for efficient generation, manifold projection/repair, performance counters, and autotuning).
+- `DynamicLiquidLayer` + `HyperWeightSynthesizer`: The original liquid MoE mechanism with spectral normalization and entropy regularization.
+- `HyperbolicLoss`: HiM-style centripetal + clustering losses for better hierarchical structure learning.
+- `SelectiveAttentionRecall`: Lightweight attention layers for high-fidelity recall.
+- Centralized Riemannian operations (`cuda_ops.py`) with clean CUDA fallback.
+
+### Rust / cuda-oxide Kernels (`rust_kernels/`)
+- A complete, buildable Rust crate with:
+  - Exact-parity Lorentzian operations (product, normalization, gated Einstein midpoint).
+  - Full single-tile and tiled compressor implementations (with shared-memory patterns and explicit barrier points documented for future GPU porting).
+  - PyO3 + numpy zero-copy bindings (buildable today via `maturin`).
+  - Rayon parallel batch processing for strong CPU performance.
+  - Clear GPU porting recipe targeting clusters + TMA + WGMMA/tcgen05.
+- The Python `TiledFractalCompressor` can optionally delegate to these Rust kernels.
+
+### Training & Infrastructure
+- `training/train_hybrid_ultimate.py`: A genuinely production-grade training script featuring:
+  - Automatic mixed precision (bf16/fp16/fp32) with GradScaler
+  - Cosine learning rate with warmup
+  - Atomic, crash-safe checkpointing (full RNG state, optimizer, scheduler, scaler)
+  - Rich JSONL + manifest logging with system info and performance counters
+  - Gradient accumulation
+  - Startup autotuning of compilation
+  - First-class `--use_tiled` and `--use_rust_accel` flags
+  - Robust resume support
+
+### Examples, Benchmarks & Documentation
+- `examples/production_usage.py`: Clean demonstration of model usage, generation APIs, and Rust acceleration.
+- `benchmark_compressor.py`: Extensive benchmark including speed, numerical stability, manifold violation checks, and Python vs Rust parity tests.
+- `HYPER_SSM_2026_ULTIMATE.md`: Detailed technical vision and roadmap.
+- `docs/PAPER_POSITIONING_2026.md`: Positioning against HiM, Nemotron 3, pure hyperbolic models, etc.
+
+### Data & Legacy
+- Real embedded C firmware corpus (`data/c_corpus.txt`, ~10.5M tokens from FreeRTOS + ESP-IDF + NXP).
+- Preserved original research notes and legacy experiments in `legacy/`.
+
+---
+
+## Vision
+
+Hyper-SSM aims to explore whether **geometric state compression + dynamic parameter synthesis** can offer a compelling alternative (or complement) to the dominant Transformer + KV-cache paradigm.
+
+**Core hypothesis:**
+A combination of Lorentzian manifold recurrence (for O(1) persistent state with exponential capacity) and hypernetwork-generated transient experts (for context-dependent computation) can deliver strong performance with dramatically better memory scaling than attention, especially when hybridized with a small number of high-fidelity recall layers.
+
+**Long-term direction:**
+- Mature, high-performance kernels via NVIDIA cuda-oxide (Rust) and/or cuTile.
+- Rigorous scaling studies and long-context evaluations.
+- Multimodal extensions (vision/audio topologies already exist in the codebase).
+- Open research artifact suitable for collaboration and follow-up work.
+
+This work sits at the intersection of hyperbolic geometry in deep learning (HiM and related 2025 work), production hybrid architectures (NVIDIA Nemotron 3 family, 2026), and the emerging next generation of GPU programming models (cuTile + cuda-oxide).
+
+---
+
+## Getting Started
+
+### Installation
 
 ```bash
-# 1. Install dependencies
+git clone https://github.com/varshinicb1/hyper-ssm-ultimate.git
+cd hyper-ssm-ultimate
+
 pip install -r requirements.txt
 
-# 2. (Optional but recommended) Build the CUDA extension
+# Optional: Build the legacy CUDA extension (Riemannian ops)
 python compile_cuda.py build_ext --inplace
-
-# 3. Try the flagship hybrid training script (demo)
-python training/train_hybrid_ultimate.py --epochs 1 --batch 2 --seq_len 256
 ```
 
-## Positioning vs 2026 Landscape
+### Quick Smoke Test (Hybrid + Tiled)
 
-- Vs **HiM** (Hierarchical Mamba + Lorentz): We add powerful dynamic liquid experts + hybrid attention.
-- Vs **NVIDIA Nemotron 3 / hybrid Mamba-Transformer**: We bring true geometric O(1) hyperbolic state + on-the-fly parameter synthesis.
-- Vs pure geometric models: We adopted the hard lesson that selective attention recall layers are necessary for frontier quality.
+```bash
+python training/train_hybrid_ultimate.py \
+  --epochs 1 \
+  --batch 2 \
+  --seq_len 256 \
+  --use_tiled \
+  --max_steps 50
+```
 
-## Future Directions (High Leverage)
+### Production-Style Training Example
 
-1. Full cuTile / native CUDA implementation of the tiled compressor.
-2. Port the core recurrence to **cuda-oxide** (Rust) for maximum performance + safety.
-3. Large-scale training runs with proper long-context evaluations.
-4. Multimodal extensions using the existing vision/audio topology modules.
+```bash
+python training/train_hybrid_ultimate.py \
+  --use_tiled \
+  --precision auto \
+  --max_steps 50000 \
+  --batch 8 \
+  --seq_len 1024 \
+  --grad_accum 4 \
+  --autotune_compile \
+  --log_interval 100
+```
 
-This project is now one of the most coherent and ambitious geometric + dynamic-compute architectures available.
+See `examples/production_usage.py` for generation and Rust acceleration examples.
 
-See `HYPER_SSM_2026_ULTIMATE.md` for the complete technical vision.
+---
+
+## Limitations (Transparency)
+
+- Most experiments in this repository have been run at modest scale (tens to low hundreds of millions of parameters) due to hardware constraints.
+- The Rust kernels currently provide a high-quality CPU reference + clear GPU porting path; full native cuda-oxide GPU kernels are not yet complete.
+- Strong long-context needle-in-a-haystack and scaling law results are still future work.
+- Some large checkpoint files and experimental outputs have been excluded via `.gitignore`.
+
+---
+
+## Roadmap (High-Leverage Next Steps)
+
+1. **Kernel maturation** — Complete high-performance single-tile and tiled kernels in cuda-oxide (or Triton/cuTile).
+2. **Rigorous evaluation** — Long-context benchmarks, scaling curves, and direct comparisons against strong Mamba-2 and Nemotron-style hybrids.
+3. **Multimodal** — Leverage the existing vision and audio topology modules for non-text experiments.
+4. **Open research** — Clean up for potential open-sourcing or collaboration.
+
+---
+
+## Acknowledgments & Positioning
+
+This project builds upon ideas from:
+- Hyperbolic geometry in deep learning (Nickel et al., HiM 2025, HELM, Hypformer, etc.)
+- State-space models (S4, Mamba/Mamba-2)
+- Production hybrid architectures (NVIDIA Nemotron-H / Nemotron 3, 2025–2026)
+- Dynamic and liquid computation ideas
+
+The engineering push in this repository (May 2026) focused on turning promising geometric ideas into something that can actually be trained seriously and extended.
+
+---
+
+**If you are a researcher or engineer interested in geometric alternatives to attention or hybrid SSM-Transformer designs, this repository is intended as a high-quality starting point rather than a finished product.**
+
+Contributions, discussions, and collaborations are welcome.
