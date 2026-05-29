@@ -3,7 +3,12 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Research](https://img.shields.io/badge/Status-Research_Artifact-6B46C1)](https://github.com/varshinicb1/hyper-ssm-ultimate)
+
+[![GitHub stars](https://img.shields.io/github/stars/varshinicb1/hyper-ssm-ultimate?style=social)](https://github.com/varshinicb1/hyper-ssm-ultimate/stargazers)
+[![GitHub last commit](https://img.shields.io/github/last-commit/varshinicb1/hyper-ssm-ultimate)](https://github.com/varshinicb1/hyper-ssm-ultimate/commits/main)
+[![Geometric Deep Learning](https://img.shields.io/badge/Geometric_DL-2026-purple)](https://github.com/varshinicb1/hyper-ssm-ultimate)
 
 **Lorentzian Fractal State-Space Models with Liquid Experts and Hybrid Recall Attention**
 
