@@ -1,5 +1,10 @@
 # Hyper-SSM Ultimate
 
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Rust](https://img.shields.io/badge/Rust-1.80%2B-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Research](https://img.shields.io/badge/Status-Research_Artifact-6B46C1)](https://github.com/varshinicb1/hyper-ssm-ultimate)
+
 **Lorentzian Fractal State-Space Models with Liquid Experts and Hybrid Recall Attention**
 
 An advanced research artifact exploring geometric alternatives to the Transformer KV-cache, combining exact Lorentzian manifold recurrence for constant-memory state with hypernetwork-synthesized dynamic experts.
