@@ -133,6 +133,8 @@ All figures are stored in the `figures/` directory and were produced by `generat
 | 6 | Long-Context Scaling Behavior | [View](#6-long-context-scaling-behavior) |
 | 7 | Liquid Expert + Router Dynamics | [View](#7-liquid-expert--router-dynamics) |
 
+> **Note**: All images are high-resolution **900 DPI PNGs**. On GitHub, click any figure to view it at full resolution (ideal for papers or presentations).
+
 ### 1. Geometrically Correct Hyperbolic Loss (Tangent Space)
 
 After the June 2026 correction, the `HyperbolicLoss` now operates directly on real Lorentz compressor states produced by `TiledFractalCompressor` (via `get_lorentz_representations()`). The loss is computed in tangent space at the origin for stable gradients.
