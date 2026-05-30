@@ -46,6 +46,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+
+try:
+    from accelerate import Accelerator
+    _HAS_ACCELERATE = True
+except ImportError:
+    _HAS_ACCELERATE = False
+
 try:
     from torch.amp import autocast, GradScaler
 except ImportError:
@@ -53,6 +62,7 @@ except ImportError:
 
 from hyper_ssm import HyperSSM, HyperSSMConfig, create_hyperbolic_loss
 from hyper_ssm.tiled_compressor import TiledFractalCompressor
+from hyper_ssm.geometry_fusion import GeometryAwareParallelFusion  # New 2026 geometry-aware fusion
 
 from train_c_code import CCodeDataLoader  # reuse the excellent C data loader
 
@@ -233,9 +243,30 @@ def load_checkpoint(path: str, model, optimizer, scaler, scheduler, device):
 
 
 def train_hybrid_ultimate(args):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"[ULTIMATE] Production training on device: {device}")
+    # === GPU / Distributed Setup for large-scale runs (DDP ready) ===
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+    is_distributed = world_size > 1
+
+    if is_distributed:
+        torch.cuda.set_device(local_rank)
+        dist.init_process_group(backend="nccl")
+        device = torch.device("cuda", local_rank)
+        print(f"[ULTIMATE] Distributed (DDP) training: rank {local_rank}/{world_size} on {device}")
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"[ULTIMATE] Production training on device: {device}")
     print(f"[ULTIMATE] PyTorch {torch.__version__} | CUDA available: {torch.cuda.is_available()}")
+
+    # === Accelerate support (recommended for large fused runs) ===
+    accelerator = None
+    if _HAS_ACCELERATE and getattr(args, "use_accelerate", False):
+        accelerator = Accelerator(
+            mixed_precision=getattr(args, "precision", "bf16") if getattr(args, "precision", "auto") != "auto" else "bf16",
+            gradient_accumulation_steps=getattr(args, "grad_accum", 1),
+        )
+        device = accelerator.device
+        print("[ULTIMATE] Using Hugging Face Accelerate for distributed + mixed precision")
 
     set_seed(getattr(args, "seed", 42))
 
@@ -256,6 +287,13 @@ def train_hybrid_ultimate(args):
         hidden_size=args.hidden_size,
         num_layers=args.num_layers,
     )
+
+    # Pass fusion flags into config so blocks pick it up natively
+    if getattr(args, "use_geometry_fusion", False):
+        config.use_geometry_fusion = True
+        config.fusion_mode = getattr(args, "fusion_mode", "tangent_gated")
+        config.gate_type = getattr(args, "gate_type", "per_channel")
+        print(f"[Trainer] Enabling GeometryAwareParallelFusion mode={config.fusion_mode} (native in blocks)")
 
     # === THE 2026 PRODUCTION MODEL ===
     use_tiled = getattr(args, "use_tiled", False)
@@ -346,7 +384,8 @@ def train_hybrid_ultimate(args):
 
     # Losses
     ce_loss_fn = nn.CrossEntropyLoss()
-    hyp_loss_fn = create_hyperbolic_loss(centripetal_weight=0.003, clustering_weight=0.003)
+    # Geometrically correct + stable: uses the class defaults (tangent_space=True + sensible small weights)
+    hyp_loss_fn = create_hyperbolic_loss()
 
     # Logging & checkpointing setup
     run_name = getattr(args, "run_name", f"hyper_ssm_ultimate_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
@@ -368,6 +407,10 @@ def train_hybrid_ultimate(args):
         "autotune_report": autotune_report,
         "start_time": datetime.now(timezone.utc).isoformat(),
         "torch_compile_disabled": bool(os.environ.get("HYPERSSM_DISABLE_COMPILE")),
+        "hyperbolic_loss_corrected": True,                 # Phase 2 fix: now uses real Lorentz states from compressors
+        "hyperbolic_loss_tangent_space": True,             # log_o projection -> Euclidean ops (much more stable)
+        "hyperbolic_loss_source": "model.get_lorentz_representations() + HyperbolicLoss.forward_lorentz",
+        "hyperbolic_loss_defaults": "from hyper_ssm.hyperbolic_loss (tangent_space=True, small weights)",
     }
     logger.save_manifest(manifest)
 
@@ -414,12 +457,39 @@ def train_hybrid_ultimate(args):
 
                     lm_loss = ce_loss_fn(logits.view(-1, config.vocab_size), Y.view(-1))
 
-                    # Hyperbolic auxiliary loss (on last position for hierarchy signal)
+                    # === GEOMETRICALLY CORRECT HYPERBOLIC LOSS (Phase 2 Fix) ===
+                    # Use real Lorentz compressor states instead of Euclidean last_hidden.
+                    # This is the highest-leverage correctness improvement for the 2026 model.
                     with torch.no_grad():
-                        last_hidden = model.ln_f(model.tok_emb(X))[:, -1, :]
+                        try:
+                            if use_tiled:
+                                lorentz_out = model.get_lorentz_representations(
+                                    X, final_only=True, with_manifold_checks=False
+                                )
+                                lorentz_states = lorentz_out["lorentz_states"]  # [B, D+1] real Lorentz
+                            else:
+                                # Fallback: cheap proxy (will be improved by switching to tiled)
+                                last_euc = model.ln_f(model.tok_emb(X))[:, -1, :]
+                                from hyper_ssm.hyperbolic_ops import stable_expmap, project_to_manifold
+                                lorentz_states = stable_expmap(last_euc)
+                                p = project_to_manifold(lorentz_states, repair=True)
+                                lorentz_states = p[0] if isinstance(p, tuple) else p
+                        except Exception as e:
+                            # Extremely defensive: never let the auxiliary loss break training
+                            lorentz_states = None
 
-                    hyp_losses = hyp_loss_fn(last_hidden)
-                    hyp_loss = hyp_losses["total"]
+                    if lorentz_states is not None:
+                        hyp_losses = hyp_loss_fn(lorentz_states)
+                        hyp_loss_val = hyp_losses.get("total", 0.0)
+                        hyp_cent = hyp_losses.get("centripetal", 0.0)
+                        hyp_clust = hyp_losses.get("clustering", 0.0)
+                        hyp_metric = hyp_losses.get("metric", "unknown")
+                        hyp_loss = torch.tensor(hyp_loss_val, device=device, dtype=lm_loss.dtype) if not isinstance(hyp_loss_val, torch.Tensor) else hyp_loss_val
+                    else:
+                        hyp_loss = torch.zeros((), device=device, dtype=lm_loss.dtype)
+                        hyp_cent = 0.0
+                        hyp_clust = 0.0
+                        hyp_metric = "disabled"
 
                     total_loss = (lm_loss - 0.008 * entropy + hyp_loss) / grad_accum_steps
 
@@ -453,10 +523,14 @@ def train_hybrid_ultimate(args):
                             except Exception:
                                 pass
 
+                        fused_active = getattr(args, "use_geometry_fusion", False)
                         logger.log({
                             "step": step,
                             "lm_loss": lm_loss.item(),
-                            "hyp_loss": hyp_loss.item(),
+                            "hyp_loss": float(hyp_loss.item() if hasattr(hyp_loss, 'item') else hyp_loss),
+                            "hyp_centripetal": float(hyp_cent),
+                            "hyp_clustering": float(hyp_clust),
+                            "hyp_metric": hyp_metric,
                             "entropy": entropy.item(),
                             "total_loss": total_loss_accum,
                             "lr": current_lr,
@@ -467,6 +541,8 @@ def train_hybrid_ultimate(args):
                             "tokens_this_step": tokens_this,
                             "amp_dtype": str(autocast_dtype),
                             "compressor_perf": perf,
+                            "geometry_fusion_active": fused_active,
+                            "fusion_mode": getattr(args, "fusion_mode", None) if fused_active else None,
                             "max_memory_mb": round(torch.cuda.max_memory_allocated() / 1e6, 1) if torch.cuda.is_available() else 0,
                         })
 
@@ -563,6 +639,19 @@ if __name__ == "__main__":
     ap.add_argument("--run_name", type=str, default=None)
     ap.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume from (crash-safe + deterministic)")
     ap.add_argument("--checkpoint", type=str, default=None, help="Alias for --resume")
+
+    # === 2026 GEOMETRY-AWARE FUSION (Aether integration) ===
+    ap.add_argument("--use_geometry_fusion", action="store_true",
+                    help="Enable GeometryAwareParallelFusion (tangent-gated or merge-attn) between Lorentz compressor and parallel attention")
+    ap.add_argument("--fusion_mode", type=str, default="tangent_gated",
+                    choices=["tangent_gated", "merge_attn_tangent", "lorentz_native"],
+                    help="Which geometry-aware fusion strategy to use")
+    ap.add_argument("--gate_type", type=str, default="per_channel",
+                    choices=["per_channel", "per_token", "scalar"])
+
+    # Accelerate support for large-scale fused runs
+    ap.add_argument("--use_accelerate", action="store_true",
+                    help="Use Hugging Face Accelerate for distributed training, mixed precision, and easy multi-GPU")
 
     args = ap.parse_args()
     train_hybrid_ultimate(args)

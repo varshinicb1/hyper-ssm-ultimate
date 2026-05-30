@@ -21,6 +21,54 @@ Operating in a Lorentzian Manifold to achieve exponential capacity in a fixed-di
 _cuda_lorentz_product = None
 _cuda_project = None
 
+# =====================================================================
+# HARDENED PUBLIC MANIFOLD REPAIR API (2026 Production Hardening)
+# All code in the repo should prefer these over the raw functions.
+# =====================================================================
+
+def safe_project_to_manifold(
+    h: torch.Tensor,
+    eps: float = 1e-6,
+    max_violation_tol: float = 1e-3,
+    repair: bool = True,
+    return_info: bool = False,
+) -> torch.Tensor | tuple[torch.Tensor, dict]:
+    """
+    Production-hardened wrapper around project_to_manifold.
+    - Always returns a clean tensor on the manifold (never a tuple unless return_info=True).
+    - Uses the full production repair logic when available.
+    - Falls back gracefully.
+    - Recommended for all call sites (tiled_compressor, model, fusion, Aether engine, etc.).
+    """
+    if "project_to_manifold" in globals() and hasattr(globals()["project_to_manifold"], "__code__"):
+        # Prefer the production version if it exists in this module
+        prod_fn = globals().get("project_to_manifold")
+        try:
+            out = prod_fn(h, eps=eps, max_violation_tol=max_violation_tol, repair=repair)
+            if isinstance(out, tuple):
+                tensor, info = out
+                return (tensor, info) if return_info else tensor
+            return (out, {}) if return_info else out
+        except TypeError:
+            pass  # fall through to simple version
+
+    # Fallback to simple but safe implementation
+    spatial = h[..., 1:]
+    time = torch.sqrt(1.0 + torch.sum(spatial ** 2, dim=-1, keepdim=True) + eps)
+    repaired = torch.cat([time, spatial], dim=-1)
+
+    if return_info:
+        v_before = check_manifold_constraint(h)
+        v_after = check_manifold_constraint(repaired)
+        info = {
+            "max_violation_before": float(v_before.detach().mean().item() if isinstance(v_before, torch.Tensor) else v_before),
+            "repair_applied": True,
+            "max_violation_after": float(v_after.detach().mean().item() if isinstance(v_after, torch.Tensor) else v_after),
+        }
+        return repaired, info
+    return repaired
+
+
 def _get_cuda_lorentz():
     global _cuda_lorentz_product
     if _cuda_lorentz_product is None:
@@ -288,8 +336,11 @@ def check_manifold_constraint(
         max_v = torch.tensor(0.0, device=violations.device if violations.device.type != "cpu" else "cpu")
     else:
         max_v = violations.max() if violations.dim() > 0 else violations
+    # Detach for safe scalar logging / float() conversion in user code and validation
+    if isinstance(max_v, torch.Tensor):
+        max_v = max_v.detach()
     if return_violations:
-        return max_v, violations
+        return max_v, violations.detach() if isinstance(violations, torch.Tensor) else violations
     return max_v
 
 
@@ -340,7 +391,8 @@ def project_to_manifold(
     repaired_count = (violations > max_violation_tol).sum().item()
     info["repaired_count"] = int(repaired_count)
     info["repair_applied"] = True
-    info["max_violation_after"] = check_manifold_constraint(repaired, eps).item()
+    after_v = check_manifold_constraint(repaired, eps)
+    info["max_violation_after"] = float(after_v.detach().item() if isinstance(after_v, torch.Tensor) else after_v)
 
     out = repaired.to(dtype) if dtype != repaired.dtype else repaired
     return out, info
@@ -380,3 +432,77 @@ def stable_expmap(v, k: float = 1.0, eps: float = 1e-6):
     if orig_dtype in (torch.bfloat16, torch.float16):
         out = out.to(orig_dtype)
     return out
+
+
+# =====================================================================
+# GEOMETRY-AWARE UTILITIES FOR PARALLEL HYBRID FUSION (2026 Aether)
+# These enable safe, stable mixing of Euclidean attention outputs with
+# Lorentz compressor states. Core primitives for Project Aether memory engine.
+# =====================================================================
+
+def log_o(x: torch.Tensor, k: float = 1.0, eps: float = 1e-8) -> torch.Tensor:
+    """
+    Logarithmic map from the origin on the Lorentz hyperboloid back to tangent space.
+    Inverse of stable_expmap (approximately).
+    Input x is on the manifold (time-first Lorentz vector).
+    Returns tangent vector at origin (spatial part only, ready for Euclidean ops).
+    """
+    # Ensure on manifold (repair for safety) — project_to_manifold returns tensor (not tuple) when no return_info
+    x = project_to_manifold(x, eps=eps)
+    if isinstance(x, tuple):
+        x = x[0]
+    x0 = x[..., 0:1]                       # time component
+    xs = x[..., 1:]                        # spatial
+
+    # Lorentz norm of spatial part (with curvature)
+    spatial_norm = torch.sqrt(torch.clamp(torch.sum(xs ** 2, dim=-1, keepdim=True), min=eps))
+
+    # arcosh( -<o, x>_L / k ) but since o = (sqrt(k), 0..) and <o,x>_L = -k * x0 / sqrt(k) wait standard:
+    # For curvature -1/k, but we use k=1 convention: arcosh(x0)
+    # Here x0 is already scaled such that <x,x>_L = -k (our convention)
+    alpha = torch.clamp(x0 / math.sqrt(k), min=1.0 + eps)   # safety
+    dist = torch.acosh(alpha)                                # hyperbolic distance from origin
+
+    # Direction in tangent
+    direction = xs / (spatial_norm + eps)
+
+    # Tangent vector length = dist (for curvature -1, adjusted)
+    tangent_vec = dist * direction * math.sqrt(k)
+
+    return tangent_vec
+
+
+def parallel_transport_from_origin(x: torch.Tensor, v: torch.Tensor, k: float = 1.0, eps: float = 1e-8) -> torch.Tensor:
+    """
+    Parallel transport a tangent vector v (at origin) to the tangent space at point x on the Lorentz manifold.
+    This allows moving Euclidean vectors (e.g. attention outputs) onto the manifold geometry without distortion.
+    """
+    x = project_to_manifold(x, eps=eps)
+    if isinstance(x, tuple):
+        x = x[0]
+    x0 = x[..., :1]
+    xs = x[..., 1:]
+
+    # Standard Lorentz PT formula from origin (k=1 convention)
+    inner = lorentz_inner(x, torch.cat([torch.zeros_like(v[..., :1]), v], dim=-1), keepdim=True)
+
+    denom = k + x0
+    scale = inner / (denom + eps)
+
+    # Simpler stable form for transport from origin
+    transported_spatial = v + (inner / (denom + eps)) * xs
+    return transported_spatial
+
+
+def lorentz_centroid(points: torch.Tensor, weights: Optional[torch.Tensor] = None, k: float = 1.0, eps: float = 1e-8) -> torch.Tensor:
+    """
+    Fréchet mean (centroid) on the Lorentz manifold.
+    Used for geometry-aware aggregation of multiple Lorentz states or attention-weighted fusion.
+    """
+    if weights is None:
+        weights = torch.ones(points.shape[:-1], device=points.device, dtype=points.dtype)
+    weights = weights / (weights.sum(dim=-1, keepdim=True) + eps)
+
+    # Weighted sum in ambient Minkowski space, then project
+    weighted_sum = torch.sum(points * weights.unsqueeze(-1), dim=-2)
+    return project_to_manifold(weighted_sum, eps=eps)

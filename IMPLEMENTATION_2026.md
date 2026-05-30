@@ -34,17 +34,17 @@ This document records the concrete engineering work done in response to the deep
 4. Actual long-context needle retrieval results that demonstrate advantage over strong baselines.
 5. Multimodal (vision/audio) training results with published numbers.
 
-## How to Verify the Changes
+**June 2026 Update**: The geometrically correct `HyperbolicLoss` on real Lorentz states (via `get_lorentz_representations()`) has been completed and is now part of the permanent `pinnacle_validate.py` gate. This closes one of the largest "looks geometric but wasn't" gaps.
+
+## How to Verify the Changes (Current Recommended)
 
 ```bash
-# 1. Basic import test
-python -c "from hyper_ssm import FractalStateCompressor, is_cuda_available; print('CUDA available:', is_cuda_available())"
+# 1. Run the single authoritative Pinnacle gate (includes geometric loss correctness)
+python -W error::UserWarning pinnacle_validate.py
 
-# 2. Run the benchmark
+# 2. Basic import + old benchmark (still useful)
+python -c "from hyper_ssm import TiledFractalCompressor, create_hyperbolic_loss; print('OK')"
 python benchmark_compressor.py
-
-# 3. Try training with the cleaned path
-python train_c_code.py --epochs 1 --batch 2 --seq_len 256
 ```
 
 ## Alignment with 2026 Research

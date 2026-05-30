@@ -1,5 +1,13 @@
 # Hyper-SSM Ultimate: Positioning for 2026 Research
 
+> **Implementation Status (June 2026):** The architecture described here is now largely realized in production-grade form:
+> - TiledFractalCompressor + full hybrid model with selective recall
+> - GeometryAwareParallelFusion (tangent space)
+> - Geometrically correct `HyperbolicLoss` on real Lorentz states (tangent space)
+> - Authoritative validation via `pinnacle_validate.py`
+>
+> See the main README for the current "What Actually Exists" table.
+
 ## Title Suggestion
 **Hyper-SSM Ultimate: Hybrid Lorentzian State-Space Models with Liquid Experts and Selective Recall Attention**
 

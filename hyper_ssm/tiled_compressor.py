@@ -25,7 +25,7 @@ import time
 from .hyperbolic_ops import (
     lorentz_normalize,
     check_manifold_constraint,
-    project_to_manifold,
+    safe_project_to_manifold as project_to_manifold,  # Hardened wrapper (always returns clean tensor by default)
     lorentz_inner,
 )
 
@@ -156,7 +156,7 @@ def _stable_lorentz_normalize(x: torch.Tensor, eps: float = 1e-5) -> torch.Tenso
     else:
         out = lorentz_normalize(x, eps=eps)
     # Final guarantee using the new project util (cheap when already good)
-    out, _ = project_to_manifold(out, eps=eps, max_violation_tol=1e-4, repair=True)
+    out = project_to_manifold(out, eps=eps, max_violation_tol=1e-4, repair=True)  # safe wrapper guarantees tensor
     return out
 
 
@@ -349,7 +349,7 @@ class TiledFractalCompressor(nn.Module):
 
         if start_t:
             elapsed = (time.perf_counter() - start_t) * 1000
-            drift = check_manifold_constraint(h_prev).item()
+            drift = check_manifold_constraint(h_prev).detach().item()
             self.counters.record_call(elapsed, used_vectorized=used_vec, drift=drift)
 
         return states
@@ -383,7 +383,7 @@ class TiledFractalCompressor(nn.Module):
             if with_manifold_checks:
                 rust_final = self._maybe_repair_manifold(rust_final, "get_final_state_rust")
             elapsed = (time.perf_counter() - start_t) * 1000
-            self.counters.record_call(elapsed, used_rust=True, drift=check_manifold_constraint(rust_final).item())
+            self.counters.record_call(elapsed, used_rust=True, drift=check_manifold_constraint(rust_final).detach().item())
             return rust_final
 
         for start in range(0, T, tile_size):
@@ -395,7 +395,7 @@ class TiledFractalCompressor(nn.Module):
                 h_prev = self._maybe_repair_manifold(h_prev, f"get_final_state_tile_{start}")
 
         elapsed = (time.perf_counter() - start_t) * 1000
-        drift = check_manifold_constraint(h_prev).item()
+        drift = check_manifold_constraint(h_prev).detach().item()
         self.counters.record_call(elapsed, used_vectorized=True, drift=drift)
         return h_prev
 
@@ -445,7 +445,7 @@ class TiledFractalCompressor(nn.Module):
             if with_manifold_checks:
                 h_new = self._maybe_repair_manifold(h_new, "update_state_intermediates")
             elapsed = (time.perf_counter() - start_t) * 1000
-            self.counters.record_call(elapsed, used_vectorized=True, drift=check_manifold_constraint(h_new).item())
+            self.counters.record_call(elapsed, used_vectorized=True, drift=check_manifold_constraint(h_new).detach().item())
             return h_new, states_new
         else:
             # Memory-efficient path: only final state (the one used in real generation)
@@ -458,7 +458,7 @@ class TiledFractalCompressor(nn.Module):
                 if with_manifold_checks:
                     h_new = self._maybe_repair_manifold(h_new, f"update_micro_{s}")
             elapsed = (time.perf_counter() - start_t) * 1000
-            drift = check_manifold_constraint(h_new).item()
+            drift = check_manifold_constraint(h_new).detach().item()
             self.counters.record_call(elapsed, used_vectorized=True, drift=drift)
             return h_new, None
 
@@ -646,7 +646,9 @@ class TiledFractalCompressor(nn.Module):
         max_v, viols = check_manifold_constraint(h, return_violations=True)
         drift = max_v.item()
         if drift > self._manifold_repair_tol:
-            h, info = project_to_manifold(h, max_violation_tol=self._manifold_repair_tol, repair=True)
+            # Use the production version that returns info dict
+            from .hyperbolic_ops import project_to_manifold as _raw_project
+            h, info = _raw_project(h, max_violation_tol=self._manifold_repair_tol, repair=True)
             self.counters.record_manifold_repair(info.get("repaired_count", 0))
             if drift > self.counters.max_drift_seen:
                 self.counters.max_drift_seen = drift

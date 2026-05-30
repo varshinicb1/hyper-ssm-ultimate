@@ -1,6 +1,8 @@
 # Title (Draft)
 Hyper-SSM: Lorentzian State-Space Models with Liquid Mixture-of-Experts
 
+> **Status Note (June 2026):** This is an earlier draft paper. The implementation has since evolved significantly into "Hyper-SSM Ultimate 2026" with tiled compressors, hybrid attention, GeometryAwareParallelFusion, geometrically correct hyperbolic losses on actual Lorentz states, and a hardened production training stack. The most up-to-date description lives in the repository README and `HYPER_SSM_2026_ULTIMATE.md`.
+
 ## Abstract
 We propose Hyper-SSM, a hyperbolic state-space architecture combining exact Lorentzian manifold operations with hypernetwork-synthesized mixture-of-experts layers. The model maintains O(1) memory state while enabling dynamic computational expansion through transient parameter instantiation. We demonstrate stable training up to 40M parameters under bfloat16 precision and evaluate scaling behavior, long-context retention, and multimodal compatibility.
 

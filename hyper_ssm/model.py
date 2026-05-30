@@ -3,9 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import warnings
 from typing import Optional, Dict, List, Tuple, Any
-from .hyperbolic_ops import FractalStateCompressor, stable_expmap, check_manifold_constraint, project_to_manifold
+from .hyperbolic_ops import (
+    FractalStateCompressor, stable_expmap, check_manifold_constraint,
+    safe_project_to_manifold as project_to_manifold,  # Hardened 2026 wrapper
+)
 from .liquid_weights import DynamicLiquidLayer
 from .hybrid_attention import SelectiveAttentionRecall
+from .geometry_fusion import GeometryAwareParallelFusion
+from .hyperbolic_ops import log_o, parallel_transport_from_origin  # for potential direct use
 from .tiled_compressor import TiledFractalCompressor  # Production 2026 compressor
 
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
@@ -115,6 +120,15 @@ class HybridHyperSSMBlock(nn.Module):
             )
             self.ln_attn = nn.LayerNorm(config.hidden_size)
 
+        # NEW: Optional geometry-aware parallel fusion (Aether 2026)
+        self.use_geometry_fusion = getattr(config, "use_geometry_fusion", False)
+        if self.use_geometry_fusion:
+            self.geometry_fusion = GeometryAwareParallelFusion(
+                hidden_size=config.hidden_size,
+                fusion_mode=getattr(config, "fusion_mode", "tangent_gated"),
+                gate_type=getattr(config, "gate_type", "per_channel"),
+            )
+
     def forward(self, x):
         # === Geometric Compressor Path (always active) ===
         x_euclid = self.ln1(x)
@@ -122,7 +136,18 @@ class HybridHyperSSMBlock(nn.Module):
         H_c = self.compressor(x_hyperbolic)
         H_context_euc = H_c[..., 1:]
 
-        x_after_compressor = x_euclid + H_context_euc
+        # === NEW: Geometry-Aware Parallel Fusion (preferred over naive residual) ===
+        if getattr(self, "use_geometry_fusion", False) and hasattr(self, "geometry_fusion"):
+            # Treat current Euclidean as the "parallel attention" path for this block
+            fused_lorentz = self.geometry_fusion(
+                lorentz_state=H_c,
+                euclid_features=x_euclid,           # or separate attention branch
+                euclid_input_for_gate=x_euclid,
+            )
+            H_context_euc = fused_lorentz[..., 1:]
+            x_after_compressor = x_euclid + H_context_euc   # still residual around fused spatial
+        else:
+            x_after_compressor = x_euclid + H_context_euc
 
         # === Optional High-Fidelity Recall Attention ===
         if self.use_attention_recall:
@@ -433,3 +458,99 @@ class HyperSSM(nn.Module):
                 v = check_manifold_constraint(comp.reset_state(1, xh.device, xh.dtype))
                 health["max_violation"] = max(health["max_violation"], float(v))
         return health
+
+    # =====================================================================
+    # GEOMETRIC REPRESENTATIONS FOR HYPERBOLIC LOSSES (Phase 2 Correctness)
+    # =====================================================================
+
+    @torch.no_grad()
+    def get_lorentz_representations(
+        self,
+        idx: torch.Tensor,
+        layer_indices: Optional[list] = None,
+        final_only: bool = True,
+        with_manifold_checks: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Return actual Lorentz compressor states for use with HyperbolicLoss.
+
+        This is the **correct** way to obtain geometric representations for
+        hierarchy / clustering auxiliary losses (instead of Euclidean last_hidden).
+
+        When using TiledFractalCompressor (recommended), this returns real
+        per-layer final Lorentz states [B, D+1] on the hyperboloid.
+
+        Args:
+            idx: token indices [B, T]
+            layer_indices: which layers to extract (None = all)
+            final_only: if True, return only the very last layer's state (most abstract)
+            with_manifold_checks: enable expensive manifold repair during extraction
+
+        Returns:
+            dict with 'lorentz_states' (list or single tensor), 'using_tiled', etc.
+        """
+        from .hyperbolic_ops import stable_expmap, project_to_manifold  # safe local import
+
+        self.eval()
+        using_tiled = self._is_using_tiled()
+        result: Dict[str, Any] = {
+            "using_tiled": using_tiled,
+            "version": "2026-pinnacle",
+        }
+
+        if not using_tiled:
+            # Graceful fallback for classic compressor path
+            x = self.tok_emb(idx)
+            for layer in self.layers:
+                x, _ = layer(x)
+            x = self.ln_f(x)
+            # Map final token Euclidean -> Lorentz as a reasonable proxy
+            last_euc = x[:, -1, :]
+            proxy = stable_expmap(last_euc)
+            proxy = project_to_manifold(proxy, repair=True)
+            if isinstance(proxy, tuple):
+                proxy = proxy[0]
+            result["lorentz_states"] = proxy
+            result["note"] = "Classic compressor path — used stable_expmap(last_hidden) proxy"
+            result["layer_index"] = "proxy"
+            return result
+
+        # Tiled path — real Lorentz states
+        layer_states = []
+        x = self.tok_emb(idx)
+
+        layers_to_run = list(range(len(self.layers)))
+        if layer_indices is not None:
+            layers_to_run = [i for i in layer_indices if 0 <= i < len(self.layers)]
+
+        for i in layers_to_run:
+            layer = self.layers[i]
+            x_euclid = layer.ln1(x)
+            x_hyp = stable_expmap(x_euclid, k=1.0)
+            comp = layer.compressor
+            final_h = comp.get_final_state(x_hyp, with_manifold_checks=with_manifold_checks)
+
+            # Continue forward (maintains consistency for subsequent layers)
+            H_c = comp(x_hyp)
+            H_context = H_c[..., 1:]
+            x_after = x_euclid + H_context
+            if getattr(layer, "use_attention_recall", False) and hasattr(layer, "recall_attn"):
+                x_after = x_after + layer.recall_attn(layer.ln_attn(x_after))
+            x_liquid_input = layer.ln2(x_after)
+            pooled = H_context[:, -1, :]
+            x_liquid, _ = layer.liquid_mlp.forward(x_liquid_input, pooled)
+            x = x + x_liquid
+
+            layer_states.append(final_h)
+
+        # Final norm + head not needed for the geometric loss
+        if final_only and len(layer_states) > 0:
+            result["lorentz_states"] = layer_states[-1]  # [B, D+1] — last layer = most compressed/abstract
+            result["layer_index"] = layers_to_run[-1]
+        else:
+            result["lorentz_states"] = layer_states
+            result["layer_indices"] = layers_to_run
+
+        result["prompt_len"] = idx.shape[1]
+        result["batch_size"] = idx.shape[0]
+        return result

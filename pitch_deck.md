@@ -1,6 +1,8 @@
 # Hyper-SSM: The End of the KV-Cache Wall
 ### A Novel O(1) State-Space Architecture for Infinite Context
 
+> **Note (June 2026):** This deck reflects an earlier vision of the architecture. The current production implementation ("Hyper-SSM Ultimate") includes hybrid attention recall layers, `GeometryAwareParallelFusion`, geometrically correct hyperbolic losses on real Lorentz states, and a full production training + validation harness. See the main [README.md](README.md) and `pinnacle_validate.py` for the current state.
+
 ---
 
 ## The Problem: The Transformer Wall

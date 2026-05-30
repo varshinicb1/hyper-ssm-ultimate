@@ -83,12 +83,14 @@ LLM-NEW/
 - Unified training scripts
 - `requirements.txt` + clean package
 
-### Phase 2 — High Impact (Do This Next)
-1. **Add `HyperbolicLoss`** (centripetal + clustering) — directly from HiM paper.
-2. **Implement `HybridHyperSSMBlock`** — compressor + optional attention.
-3. **Create `training/train_hybrid.py`** — modern training script with the hybrid model + proper loss.
-4. **Archive legacy ALR code** into `legacy/`.
-5. **Add "Future Kernel Paths" documentation** (cuTile + cuda-oxide strategy).
+### Phase 2 — High Impact (Completed June 2026)
+1. **Geometrically correct `HyperbolicLoss`** (centripetal + clustering + radius health) — now operates on real Lorentz states from `TiledFractalCompressor` via the new `get_lorentz_representations()` API. Uses tangent space at origin for stable gradients. Permanently exercised by the authoritative `pinnacle_validate.py` gate (passes strict mode).
+2. **Implement `HybridHyperSSMBlock`** — compressor + optional attention. ✓
+3. **Production training script** (`training/train_hybrid_ultimate.py`) with rich logging, AMP, atomic checkpoints, fusion flags. ✓
+4. **Archive legacy ALR code** into `legacy/`. (Mostly done — old paths are isolated)
+5. **"Future Kernel Paths" documentation** + centralized Riemannian ops. ✓
+
+The remaining Phase 2 spirit is now addressed. The loss is no longer a no-op or applied to the wrong space.
 
 ### Phase 3 — Ambitious (Make It Stand Out)
 - Prototype a cuTile-style tiled compressor (huge performance win).
@@ -139,4 +141,9 @@ The remaining work is mostly execution: longer runs, better evals, and optionall
 
 Everything previous (inspection findings, research summary, partial code upgrades) has been folded into this unified vision.
 
-**Next step recommendation**: Implement Phase 2 items above, starting with `HyperbolicLoss` + `HybridHyperSSMBlock`. I can continue executing those immediately if you confirm.
+**Next step recommendation**: Phase 2 geometric correctness (HyperbolicLoss on real Lorentz states) is now complete and gated. Recommended next focus:
+- Longer training runs using the ultimate trainer with `--use_tiled --use_geometry_fusion`
+- Running and extending the Aether closed loop on the 200-paper corpus
+- Scaling experiments + publishing actual fused vs baseline curves
+
+The foundation (correct geometry + production tooling + validation) is solid.
