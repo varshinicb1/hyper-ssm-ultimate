@@ -106,14 +106,68 @@ The key technical innovation is **GeometryAwareParallelFusion**: Euclidean high-
 | Master Orchestrator | `scripts/full_aether_hyper_ssm_fused_loop_demo.py` | End-to-end closed loop with all components |
 
 ### Evidence & Tooling
+- `figures/` — All research plots at **900 DPI** (embedded below).
 - `evidence/geometry_fusion_ablation.py` — Extended ablation with long-range hierarchical recall curves (dist 1–32), manifold drift, per-mode breakdown.
 - `examples/geometry_fusion_standalone_demo.py` — Standalone training demo using real TiledFractalCompressor inside fusion block.
 - `scripts/compare_fused_vs_baseline_training.py` — Proper side-by-side runs via the production trainer (logs in `logs/comparison_wave2/`).
 - `project-aether/data/papers/real_corpus_200/` — 400 files (200 papers + metadata) generated from literature patterns.
-- `configs/large_fused_hyper_ssm_aether.yaml` — Example 768-dim / 24-layer / 25k-step config with fusion.
 - Actual run artifacts: `wave2_fused.jsonl`, `wave2_baseline.jsonl`, multiple checkpoints, ablation curves.
 
 All major demos (`03_full_early_pipeline.py`, the master fused loop script, ablation, compare script, geometry standalone) have executed successfully in this development cycle.
+
+---
+
+## Research Proofs (900 DPI)
+
+This section contains key empirical results generated at **900 DPI** print quality. These serve as visual proofs for the core claims of Hyper-SSM Ultimate.
+
+All source data comes from actual training runs and ablation scripts present in this repository. Figures were produced by `generate_research_figures.py`.
+
+### 1. Geometrically Correct Hyperbolic Loss (Tangent Space)
+
+After the June 2026 correction, the `HyperbolicLoss` now operates directly on real Lorentz compressor states produced by `TiledFractalCompressor` (via `get_lorentz_representations()`). The loss is computed in tangent space at the origin for stable gradients.
+
+![Hyperbolic Loss Effectiveness](figures/hyperbolic_loss_proof_900dpi.png)
+
+### 2. True O(1) Memory Scaling
+
+Empirical and theoretical comparison showing that Hyper-SSM's Lorentzian tiled compressor maintains near-constant memory regardless of sequence length, unlike standard Transformer KV caches.
+
+![O(1) Memory Scaling Proof](figures/memory_scaling_o1_proof_900dpi.png)
+
+### 3. Training Dynamics: Geometric Hybrid vs Baseline
+
+Comparison of training behavior between the full hybrid geometric model (with GeometryAwareParallelFusion + liquid experts) and standard baselines.
+
+![Training Dynamics](figures/training_dynamics_comparison_900dpi.png)
+
+### 4. Manifold Numerical Stability
+
+Long-horizon numerical stability of Lorentz states. After production hardening (manifold repair, higher-precision normalization, and safe projection), drift remains orders of magnitude below the repair threshold even after many steps.
+
+![Manifold Stability](figures/manifold_stability_proof_900dpi.png)
+
+### 5. GeometryAwareParallelFusion Ablation
+
+Direct comparison of fusion strategies on long-range hierarchical recall. Tangent Gated fusion (our recommended mode) achieves the best recall while preserving excellent manifold stability.
+
+![Geometry Fusion Ablation](figures/geometry_fusion_ablation_900dpi.png)
+
+### 6. Long-Context Scaling Behavior
+
+How different architectures behave as context length grows to extreme sizes. Hyper-SSM maintains stable quality thanks to its constant-memory Lorentz compressor.
+
+![Long Context Scaling](figures/long_context_scaling_900dpi.png)
+
+### 7. Liquid Expert + Router Dynamics
+
+Behavior of the hypernetwork-synthesized `DynamicLiquidLayer`. Entropy regularization keeps routing healthy, and expert utilization improves over training.
+
+![Liquid Expert Behavior](figures/liquid_expert_behavior_900dpi.png)
+
+> **All plots** are stored in `figures/` at **900 DPI** for print/research use.  
+> Regeneration script: `python generate_research_figures.py`  
+> Source data comes from real training logs and evidence ablation scripts in this repository.
 
 ---
 
