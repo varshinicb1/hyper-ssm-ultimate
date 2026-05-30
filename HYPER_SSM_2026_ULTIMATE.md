@@ -1,7 +1,8 @@
-# Hyper-SSM 2026 Ultimate: The Best Version
+# Hyper-SSM: Honest Technical Notes (2026)
 
-**Project Goal (Integrated Vision)**  
-Create the strongest possible realization of the original Hyper-SSM idea — **O(1) memory geometric state compression + dynamic liquid experts** — informed by the full May 2026 research landscape.
+**Important:** This document was originally written with highly optimistic framing. Much of that language overstated what had actually been achieved. This version has been edited for accuracy.
+
+The project remains an early research prototype. See `HONEST_ASSESSMENT.md` for the current realistic status.
 
 This version deliberately synthesizes:
 - Your original strengths (Lorentzian fractal compressor + hypernetwork-synthesized experts)

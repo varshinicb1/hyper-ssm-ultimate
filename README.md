@@ -1,6 +1,14 @@
-# Hyper-SSM Ultimate + Project Aether
+# Hyper-SSM (Early Research Prototype)
 
-**Lorentzian Fractal State-Space Models as the Persistent Memory Substrate for Autonomous Scientific Discovery**
+**An engineering-heavy exploration of Lorentzian state-space models with hypernetwork-synthesized experts.**
+
+**Warning:** This is an early-stage research project. Much of the language in older documents in this repo is overstated. 
+
+**Start here for truth:**
+- `HONEST_ASSESSMENT.md` — Current realistic status
+- `eval/honest_benchmarks.py` — Where real evaluation work should happen
+
+Everything else should be read skeptically.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
@@ -14,34 +22,28 @@
 
 ---
 
-## Honest Executive Summary (June 2026)
+## Honest Current Status (as of late June 2026)
 
-This repository contains **two tightly integrated, real, and runnable bodies of work** developed aggressively in May–June 2026:
+This is an **early research prototype**, not a production system.
 
-1. **Hyper-SSM Core** — A production-hardened implementation of hyperbolic (Lorentzian) tiled fractal state-space models featuring:
-   - The flagship `TiledFractalCompressor` (cuTile-inspired blocked recurrence in Lorentz space with aggressive vectorization, `torch.compile`, manifold repair, and optional Rust kernels).
-   - `DynamicLiquidLayer` + `HyperWeightSynthesizer` (hypernetwork-synthesized low-rank ternary experts).
-   - `GeometryAwareParallelFusion` — tangent-space gated / merge-attention fusion between the recurrent compressor and parallel Euclidean attention heads.
-   - **Geometrically correct `HyperbolicLoss`** (centripetal + clustering + radius health) now operating on real Lorentz compressor states via `get_lorentz_representations()` (tangent space at origin for stable gradients).
-   - Full production training infrastructure (`training/train_hybrid_ultimate.py`) with AMP, atomic checkpointing, rich logging, Accelerate/DDP support, and native fusion flags.
-   - Single authoritative validation gate: `pinnacle_validate.py` (runs clean under strict warnings).
+### What Actually Exists and Works
+- A reasonably well-engineered implementation of a hybrid Lorentzian SSM with:
+  - Tiled recurrent compressor in hyperbolic space (`TiledFractalCompressor`)
+  - Hypernetwork-synthesized dynamic experts (`DynamicLiquidLayer`)
+  - Optional parallel fusion with attention in tangent space
+  - A training script with good infrastructure (AMP, atomic checkpoints, rich logging)
+- The core geometric loss was **not actually using hyperbolic geometry** for most of the project's life. This was only fixed recently.
+- Project Aether exists as a collection of schemas, a small knowledge graph, a synthetic-ish 200-paper corpus, and a fully simulated (not real) closed loop. The "robotic lab" is a sophisticated stub.
 
-2. **Project Aether** — A functional closed-loop autonomous materials discovery prototype that **repurposes the Hyper-SSM geometric compressor as its long-term Scientific Memory Engine**. It includes:
-   - Strict Pydantic schemas for materials, hydrothermal synthesis protocols, experiments, and plans.
-   - A queryable NetworkX Scientific Knowledge Graph with rich domain queries.
-   - A real 200-paper hydrothermal synthesis corpus (literature-grounded TiO₂, BiVO₄, ZnO, etc.).
-   - `ScientificMemoryEngine` with `LorentzProjector` + full `TiledFractalCompressor` + `GeometryAwareParallelFusion`.
-   - **Two complementary reasoning engines**: a lightweight `HypothesisGenerator` (KG + memory) **and** `FullHyperSSMReasoner` (the complete liquid-expert Hyper-SSM model run on fused memory states to emit structured hypotheses).
-   - `SynthesisPlanner`, trainable `ExperimentalSimulator` (heuristic + neural surrogate that learns from feedback), and a sophisticated `RoboticLabInterfaceStub` (real robot DSL command translation + realistic failure modes + automatic fused-memory feedback).
-   - Working end-to-end master orchestrator that closes the loop: papers → fused ingestion → dual reasoners → plans → simulation → robotic execution → results back into fused memory + simulator training.
+### What Does Not Exist
+- Competitive results against modern baselines (Mamba-2, RetNet, Griffin, etc.) at any meaningful scale.
+- Rigorous long-context or memory-scaling experiments that would survive serious scrutiny.
+- Any actual physical scientific discovery loop.
+- Large-scale training runs.
 
-**This is not a chatbot, RAG system, or paper search engine.** It is an early but serious attempt at a geometric-memory-driven scientific reasoning + closed-loop discovery system.
+The project has received heavy documentation and visualization polish (including the plots in this README), which can create a misleading impression of maturity. The actual experimental evidence remains limited.
 
-**What this is not (yet):**
-- Large-scale trained models with published benchmark tables vs. Llama-3 / Nemotron / Mamba-2.
-- A real (non-simulated) robotic hardware driver.
-- A fully continuous online learning / retraining loop at scale.
-- Published research papers or formal long-context scaling curves.
+**Realistic description:** An interesting architectural exploration with above-average engineering, but still far from demonstrating the ambitious claims made in some of the older documents in this repository.
 
 ---
 
@@ -117,11 +119,13 @@ All major demos (`03_full_early_pipeline.py`, the master fused loop script, abla
 
 ---
 
-## Research Proofs (900 DPI)
+## Visualizations (900 DPI)
 
-This section contains **key empirical results** generated at **900 DPI** print quality. These serve as visual proofs for the core technical claims of Hyper-SSM Ultimate (2026).
+**Note:** The figures below were generated during an earlier phase of this project that focused too heavily on presentation. They should be treated as illustrative rather than as rigorous evidence.
 
-All figures are stored in the `figures/` directory and were produced by `generate_research_figures.py` using real training logs and ablation data from this repository.
+Many are based on small runs or synthetic data. Real empirical validation is still needed (see `HONEST_ASSESSMENT.md` and `eval/honest_benchmarks.py`).
+
+All figures are stored in `figures/`. They were produced by `generate_research_figures.py`.
 
 | # | Proof | Figure |
 |---|-------|--------|
