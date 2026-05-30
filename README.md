@@ -119,9 +119,19 @@ All major demos (`03_full_early_pipeline.py`, the master fused loop script, abla
 
 ## Research Proofs (900 DPI)
 
-This section contains key empirical results generated at **900 DPI** print quality. These serve as visual proofs for the core claims of Hyper-SSM Ultimate.
+This section contains **key empirical results** generated at **900 DPI** print quality. These serve as visual proofs for the core technical claims of Hyper-SSM Ultimate (2026).
 
-All source data comes from actual training runs and ablation scripts present in this repository. Figures were produced by `generate_research_figures.py`.
+All figures are stored in the `figures/` directory and were produced by `generate_research_figures.py` using real training logs and ablation data from this repository.
+
+| # | Proof | Figure |
+|---|-------|--------|
+| 1 | Geometrically Correct Hyperbolic Loss (Tangent Space) | [View](#1-geometrically-correct-hyperbolic-loss-tangent-space) |
+| 2 | True O(1) Memory Scaling | [View](#2-true-o1-memory-scaling) |
+| 3 | Training Dynamics (Hybrid Geometric vs Baseline) | [View](#3-training-dynamics-geometric-hybrid-vs-baseline) |
+| 4 | Manifold Numerical Stability | [View](#4-manifold-numerical-stability) |
+| 5 | GeometryAwareParallelFusion Ablation | [View](#5-geometryawareparallelfusion-ablation) |
+| 6 | Long-Context Scaling Behavior | [View](#6-long-context-scaling-behavior) |
+| 7 | Liquid Expert + Router Dynamics | [View](#7-liquid-expert--router-dynamics) |
 
 ### 1. Geometrically Correct Hyperbolic Loss (Tangent Space)
 
