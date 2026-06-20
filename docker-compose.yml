@@ -1,0 +1,28 @@
+services:
+  icm-server:
+    build: .
+    container_name: icm-server
+    ports:
+      - "8000:8000"
+    environment:
+      ICM_MODEL_NAME: "gpt2"
+      ICM_EMBEDDING_MODEL: "all-MiniLM-L6-v2"
+      ICM_MAX_SESSIONS: 100
+      ICM_SESSION_TTL: 3600
+      ICM_LOG_LEVEL: "INFO"
+      ICM_HOST: "0.0.0.0"
+      ICM_PORT: "8000"
+    volumes:
+      - icm-data:/app/data
+      - icm-sqlite:/app/sqlite
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  icm-data:
+  icm-sqlite:

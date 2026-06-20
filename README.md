@@ -14,6 +14,27 @@
 
 ---
 
+## Demo
+
+Try ICM right now — 4 ways:
+
+| Method | Command |
+|:-------|:--------|
+| **Docker** (full stack) | `docker compose up -d && open http://localhost:8000` |
+| **Colab** (browser) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](icm_demo.ipynb) |
+| **CLI** (local) | `python icm_demo.py` or `python applications/cli_chat.py` |
+| **Python** (code) | `pip install -r requirements.txt && python -c "from hyper_ssm.conversation_memory import InfiniteContextMemory; print(InfiniteContextMemory().__doc__)"` |
+
+```bash
+# One-liner to see O(1) memory in action:
+python icm_demo.py
+# Output: 260 bytes per turn — fixed, forever.
+```
+
+![ICM Demo](social-preview.png)
+
+---
+
 ## Why This Matters
 
 Every LLM today uses **attention** — a mechanism with quadratic cost in sequence length. A 70B model processing 1M tokens needs **~640 GB of GPU RAM** just for the KV-cache.
@@ -49,23 +70,23 @@ The hyperbolic space (Lorentz model) has **exponential representational capacity
 ## Quick Start
 
 ```bash
-# One command to install
-pip install fastapi uvicorn sentence-transformers
+# 1. Install
+pip install -r requirements.txt
 
-# Start the server
-python applications/icm_server.py
+# 2. Verify O(1) memory (10 seconds)
+python icm_demo.py
 
-# Open the web UI
-# → http://localhost:8000/static/index.html
-```
-
-Or use the CLI:
-
-```bash
+# 3. Chat in the terminal
 python applications/cli_chat.py
-```
 
-### Try it with code
+# 4. Start the web server
+python applications/icm_server.py
+# → http://localhost:8000
+
+# Or everything at once with Docker:
+docker compose up -d
+# → http://localhost:8000
+```
 
 ```python
 from hyper_ssm.llm_integration import IcmLlm
@@ -203,11 +224,19 @@ See the [full API docs](http://localhost:8000/docs) (available when the server i
 
 ## Deployment
 
-### Docker
+### Docker (recommended)
+
+```bash
+# One command — full stack with health checks, volumes, restart
+docker compose up -d
+open http://localhost:8000
+```
+
+### Docker (manual)
 
 ```bash
 docker build -t icm-server .
-docker run -p 8000:8000 -v $(pwd)/data:/data icm-server
+docker run -p 8000:8000 -v icm-data:/app/data icm-server
 ```
 
 ### Production
