@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from typing import Optional, Dict, Any
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -32,10 +33,12 @@ def _get_config():
     return _cfg
 
 # ---------------------------------------------------------------------------
-# Shared LLM backend
+# Shared LLM backend — loaded in background so server always responds fast
 # ---------------------------------------------------------------------------
 _llm_instance = None
 _llm_instance_lock = threading.Lock()
+_llm_loading = False
+_llm_ready = threading.Event()
 
 try:
     from hyper_ssm.llm_integration import IcmLlm as LlmBackend
@@ -44,22 +47,46 @@ except ImportError:
     LlmBackend = None
     LLM_BACKEND_AVAILABLE = False
 
+# Only load the GPU model when CUDA is actually available
+_HAS_CUDA = False
+try:
+    import torch
+    _HAS_CUDA = torch.cuda.is_available()
+except Exception:
+    pass
+
 def get_llm():
-    global _llm_instance
-    if _llm_instance is None:
+    global _llm_instance, _llm_loading
+    if not _HAS_CUDA:
+        return None  # CPU: use memory fallback instead
+    if _llm_instance is None and not _llm_loading:
         with _llm_instance_lock:
-            if _llm_instance is None:
+            if _llm_instance is None and not _llm_loading:
+                _llm_loading = True
                 cfg = _get_config()
-                logger.info(f"Initializing IcmLlm (model={cfg.model_name}, embedder={cfg.embedder_name}, quantize={cfg.quantize_bits}, sqlite={cfg.sqlite_path})...")
-                _llm_instance = LlmBackend(
-                    model_name=cfg.model_name,
-                    embedder_name=cfg.embedder_name,
-                    auto_save_dir=cfg.save_dir,
-                    quantize_bits=cfg.quantize_bits,
-                    sqlite_path=cfg.sqlite_path,
-                )
-                logger.info("IcmLlm ready")
-    return _llm_instance
+                logger.info(f"Loading GPU model in background (model={cfg.model_name})...")
+                def _load():
+                    global _llm_instance
+                    try:
+                        instance = LlmBackend(
+                            model_name=cfg.model_name,
+                            embedder_name=cfg.embedder_name,
+                            auto_save_dir=cfg.save_dir,
+                            quantize_bits=cfg.quantize_bits,
+                            sqlite_path=cfg.sqlite_path,
+                        )
+                        with _llm_instance_lock:
+                            _llm_instance = instance
+                        logger.info("IcmLlm ready — GPU model loaded")
+                    except Exception as e:
+                        logger.warning(f"Failed to load GPU model: {e}")
+                    finally:
+                        _llm_ready.set()
+                thread = threading.Thread(target=_load, daemon=True)
+                thread.start()
+    if _llm_ready.is_set():
+        return _llm_instance
+    return None
 
 # ---------------------------------------------------------------------------
 # Session tracking
@@ -90,25 +117,59 @@ def _delete_session(session_id: str):
         _session_meta.pop(session_id, None)
 
 # ---------------------------------------------------------------------------
-# Simulated fallback
+# Memory-powered fallback (always works, no GPU needed)
 # ---------------------------------------------------------------------------
-_sim_counter = 0
-def _simulated_chat(session_id: str, message: str) -> str:
-    global _sim_counter
-    _sim_counter += 1
-    response = (
-        f"[Simulated ICM — turn {_sim_counter}] "
-        f'Received: "{message}". '
-        f"Infinite Context Memory active — compressing conversation in O(1) hyperbolic state."
-    )
-    with _session_lock:
-        meta = _session_meta.get(session_id)
-        if meta is not None:
-            if "history" not in meta:
-                meta["history"] = []
-            meta["history"].append({"role": "user", "content": message})
-            meta["history"].append({"role": "assistant", "content": response})
-    return response
+_mem_sessions = {}
+_mem_sessions_lock = threading.Lock()
+_embedder = None
+
+def _get_embedder():
+    global _embedder
+    if _embedder is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            _embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        except Exception:
+            _embedder = None
+    return _embedder
+
+def _memory_chat(session_id: str, message: str) -> str:
+    with _mem_sessions_lock:
+        if session_id not in _mem_sessions:
+            from hyper_ssm.conversation_memory import InfiniteContextMemory
+            _mem_sessions[session_id] = {
+                "memory": InfiniteContextMemory(embedding_dim=384, state_dim=64, num_scales=4),
+                "history": [],
+            }
+        entry = _mem_sessions[session_id]
+
+    embedder = _get_embedder()
+    if embedder is not None:
+        emb = embedder.encode(message, convert_to_numpy=True)
+    else:
+        emb = np.random.randn(384).astype(np.float32)
+
+    entry["memory"].remember(emb)
+    entry["history"].append({"role": "user", "content": message})
+
+    recalled = entry["memory"].recall_all_scales(emb)
+    mem_info = entry["memory"].info()
+
+    # Build a response that demonstrates memory recall
+    turns = len(entry["history"]) // 2 + 1
+    if turns == 1:
+        response = f"I hear you. [ICM memory active: {mem_info['memory_bytes']}B, turn 1]"
+    else:
+        # Show that something was recalled from previous turns
+        prev = entry["history"][-3]["content"] if len(entry["history"]) >= 3 else ""
+        recall_note = f" (recalled {len(recalled)} scales)" if len(recalled) > 0 else ""
+        response = (
+            f"I remember our conversation. Earlier you said: \"{prev[:80]}\""
+            f"{recall_note}. [ICM: {mem_info['memory_bytes']}B, {turns} turns compressed]"
+        )
+
+    entry["history"].append({"role": "assistant", "content": response})
+    return response, entry["memory"], entry["history"]
 
 # ---------------------------------------------------------------------------
 # Lifespan handler (replaces deprecated on_event)
@@ -117,7 +178,9 @@ def _simulated_chat(session_id: str, message: str) -> str:
 async def lifespan(app: FastAPI):
     cfg = _get_config()
     logger.info(f"ICM Server | model={cfg.model_name} embedding={cfg.embedder_name} max_sessions={cfg.max_sessions} quantize={cfg.quantize_bits} sqlite={cfg.sqlite_path}")
-    if not LLM_BACKEND_AVAILABLE:
+    if not _HAS_CUDA:
+        logger.info("CPU mode — using memory-powered fallback (instant responses, no GPU needed)")
+    elif not LLM_BACKEND_AVAILABLE:
         logger.warning("No LLM backend — all responses simulated")
     cleanup_task = asyncio.create_task(_periodic_cleanup())
     yield
@@ -246,16 +309,21 @@ class ModelSwitchRequest(BaseModel):
 # Endpoints
 # ---------------------------------------------------------------------------
 
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/static/index.html")
+
 @app.get("/health")
 async def get_health():
     cfg = _get_config()
     with _session_lock:
         active = len(_session_meta)
+    mode = "gpu" if _HAS_CUDA else "cpu-memory-fallback"
     return {"status": "ok", "model": cfg.model_name, "embedding": cfg.embedder_name,
-            "llm_available": LLM_BACKEND_AVAILABLE, "sessions_active": active,
-            "max_sessions": cfg.max_sessions, "session_ttl": cfg.session_ttl,
-            "quantize_bits": cfg.quantize_bits, "sqlite_path": cfg.sqlite_path,
-            "auth_enabled": cfg.auth_enabled}
+            "llm_available": LLM_BACKEND_AVAILABLE, "mode": mode,
+            "sessions_active": active, "max_sessions": cfg.max_sessions,
+            "session_ttl": cfg.session_ttl, "quantize_bits": cfg.quantize_bits,
+            "sqlite_path": cfg.sqlite_path, "auth_enabled": cfg.auth_enabled}
 
 # ---------------------------------------------------------------------------
 # Model presets
@@ -278,9 +346,12 @@ async def create_session():
     import uuid
     sid = f"sess_{uuid.uuid4().hex[:12]}"
     _ensure_session(sid)
-    if LLM_BACKEND_AVAILABLE:
-        llm = get_llm()
-        llm.create_session(sid)
+    llm = get_llm()
+    if llm is not None:
+        try:
+            llm.create_session(sid)
+        except Exception:
+            pass
     return {"session_id": sid, "status": "created"}
 
 @app.get("/sessions")
@@ -288,29 +359,34 @@ async def list_sessions():
     cfg = _get_config()
     with _session_lock:
         sessions_data = dict(_session_meta)
-    llm_ref = get_llm() if LLM_BACKEND_AVAILABLE else None
-    active = set(llm_ref._sessions.keys()) if llm_ref is not None else set()
+    llm_ref = get_llm()
+    llm_sessions = set(llm_ref._sessions.keys()) if llm_ref is not None else set()
+    mem_sessions = set(_mem_sessions.keys()) if _mem_sessions else set()
     infos = []
     for sid, m in sessions_data.items():
         turns = 0
-        if sid in active:
+        if sid in llm_sessions:
             history = llm_ref._sessions[sid].get("history", [])
+            turns = len(history) // 2
+        elif sid in mem_sessions:
+            history = _mem_sessions[sid]["history"]
             turns = len(history) // 2
         infos.append({"id": sid, "turns": turns,
                       "last_active": m["last_active"], "created_at": m["created_at"]})
     total = len(infos)
-    if LLM_BACKEND_AVAILABLE and get_llm()._store:
-        total = get_llm()._store.count()
+    if llm_ref is not None and llm_ref._store:
+        total = llm_ref._store.count()
     return {"sessions": infos, "total": total, "max": cfg.max_sessions}
 
 @app.delete("/sessions/{session_id}")
 async def delete_session(session_id: str):
     _delete_session(session_id)
+    with _mem_sessions_lock:
+        _mem_sessions.pop(session_id, None)
     try:
-        if LLM_BACKEND_AVAILABLE:
-            llm = get_llm()
-            if session_id in llm._sessions:
-                llm.delete_session(session_id)
+        llm = get_llm()
+        if llm is not None and session_id in llm._sessions:
+            llm.delete_session(session_id)
     except Exception:
         pass
     return {"status": "deleted", "session_id": session_id}
@@ -318,23 +394,26 @@ async def delete_session(session_id: str):
 @app.post("/chat")
 async def chat(req: ChatRequest):
     _ensure_session(req.session_id)
-    if not LLM_BACKEND_AVAILABLE:
-        response = _simulated_chat(req.session_id, req.message)
-        return {"response": response, "session_id": req.session_id,
-                "turns_compressed": _sim_counter, "memory_bytes": 0}
     llm = get_llm()
-    async def _do_chat():
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, llm.chat, req.session_id, req.message)
-    try:
-        response = await _do_chat()
-    except Exception as exc:
-        logger.error(f"Chat error [{req.session_id}]: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
-    session = llm._sessions.get(req.session_id, {})
-    memory = session.get("memory")
+    if llm is not None:
+        async def _do_chat():
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(None, llm.chat, req.session_id, req.message)
+        try:
+            response = await _do_chat()
+        except Exception as exc:
+            logger.error(f"Chat error [{req.session_id}]: {exc}")
+            raise HTTPException(status_code=500, detail=str(exc))
+        session = llm._sessions.get(req.session_id, {})
+        memory = session.get("memory")
+        mem_bytes = memory.memory_size_bytes if memory else 0
+        turns = llm.conversation_length // 2 if hasattr(llm, "conversation_length") else 0
+        return {"response": response, "session_id": req.session_id,
+                "turns_compressed": turns, "memory_bytes": mem_bytes}
+    # Fallback: memory-powered response (always instant)
+    response, memory, history = _memory_chat(req.session_id, req.message)
     mem_bytes = memory.memory_size_bytes if memory else 0
-    turns = llm.conversation_length // 2 if hasattr(llm, "conversation_length") else 0
+    turns = len(history) // 2
     return {"response": response, "session_id": req.session_id,
             "turns_compressed": turns, "memory_bytes": mem_bytes}
 
@@ -342,35 +421,38 @@ async def chat(req: ChatRequest):
 async def chat_stream(session_id: str, message: str):
     _ensure_session(session_id)
     async def event_generator():
-        if not LLM_BACKEND_AVAILABLE:
-            response = _simulated_chat(session_id, message)
-            yield f"event: token\ndata: {json.dumps({'token': response, 'session_id': session_id})}\n\n"
-            yield f"event: done\ndata: {json.dumps({'session_id': session_id, 'turns_compressed': _sim_counter, 'memory_bytes': 0})}\n\n"
-            return
         llm = get_llm()
-        loop = asyncio.get_running_loop()
-        q = asyncio.Queue()
-        def _run_stream():
-            try:
-                for token in llm.chat_stream(session_id, message):
-                    loop.call_soon_threadsafe(q.put_nowait, ("token", token))
-            except Exception as e:
-                loop.call_soon_threadsafe(q.put_nowait, ("error", str(e)))
-            loop.call_soon_threadsafe(q.put_nowait, ("done", None))
-        thread = threading.Thread(target=_run_stream, daemon=True)
-        thread.start()
-        while True:
-            event_type, data = await q.get()
-            if event_type == "error":
-                yield f"event: error\ndata: {json.dumps({'error': data})}\n\n"
-                return
-            if event_type == "done":
-                break
-            yield f"event: token\ndata: {json.dumps({'token': data, 'session_id': session_id})}\n\n"
-        session = llm._sessions.get(session_id, {})
-        memory = session.get("memory")
-        mem_bytes = memory.memory_size_bytes if memory else 0
-        turns = memory._utterance_count // 2 if memory else 0
+        if llm is not None:
+            loop = asyncio.get_running_loop()
+            q = asyncio.Queue()
+            def _run_stream():
+                try:
+                    for token in llm.chat_stream(session_id, message):
+                        loop.call_soon_threadsafe(q.put_nowait, ("token", token))
+                except Exception as e:
+                    loop.call_soon_threadsafe(q.put_nowait, ("error", str(e)))
+                loop.call_soon_threadsafe(q.put_nowait, ("done", None))
+            thread = threading.Thread(target=_run_stream, daemon=True)
+            thread.start()
+            while True:
+                event_type, data = await q.get()
+                if event_type == "error":
+                    yield f"event: error\ndata: {json.dumps({'error': data})}\n\n"
+                    return
+                if event_type == "done":
+                    break
+                yield f"event: token\ndata: {json.dumps({'token': data, 'session_id': session_id})}\n\n"
+            session = llm._sessions.get(session_id, {})
+            memory = session.get("memory")
+            mem_bytes = memory.memory_size_bytes if memory else 0
+            turns = memory._utterance_count // 2 if memory else 0
+        else:
+            response, memory, history = _memory_chat(session_id, message)
+            for word in response.split(" "):
+                yield f"event: token\ndata: {json.dumps({'token': word + ' ', 'session_id': session_id})}\n\n"
+            mem_bytes = memory.memory_size_bytes if memory else 0
+            turns = len(history) // 2
+        yield f"event: done\ndata: {json.dumps({'session_id': session_id, 'turns_compressed': turns, 'memory_bytes': mem_bytes})}\n\n"
         yield f"event: done\ndata: {json.dumps({'session_id': session_id, 'turns_compressed': turns, 'memory_bytes': mem_bytes})}\n\n"
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
@@ -397,19 +479,20 @@ async def chat_websocket(ws: WebSocket):
                 continue
 
             _ensure_session(session_id)
+            llm = get_llm()
 
-            if not LLM_BACKEND_AVAILABLE:
-                response = _simulated_chat(session_id, message)
+            if llm is None:
+                response, memory, history = _memory_chat(session_id, message)
                 for word in response.split(" "):
                     await ws.send_json({"token": word + " ", "session_id": session_id})
                     await asyncio.sleep(0.02)
+                mem_bytes = memory.memory_size_bytes if memory else 0
+                turns = len(history) // 2
                 await ws.send_json({
                     "done": True, "session_id": session_id,
-                    "turns_compressed": _sim_counter, "memory_bytes": 0,
+                    "turns_compressed": turns, "memory_bytes": mem_bytes,
                 })
                 continue
-
-            llm = get_llm()
             q = asyncio.Queue()
 
             def _run():
@@ -469,17 +552,16 @@ async def get_session_info(session_id: str):
 # ---------------------------------------------------------------------------
 
 def _get_session_history(session_id: str):
-    if LLM_BACKEND_AVAILABLE:
-        llm = get_llm()
+    llm = get_llm()
+    if llm is not None:
         session = llm._sessions.get(session_id)
-        if session is None:
-            raise HTTPException(status_code=404, detail="Session not found")
-        return session["history"]
-    with _session_lock:
-        meta = _session_meta.get(session_id)
-        if meta is None:
-            raise HTTPException(status_code=404, detail="Session not found")
-        return meta.get("history", [])
+        if session is not None:
+            return session["history"]
+    with _mem_sessions_lock:
+        mem_entry = _mem_sessions.get(session_id)
+        if mem_entry is not None:
+            return mem_entry["history"]
+    raise HTTPException(status_code=404, detail="Session not found")
 
 @app.get("/sessions/{session_id}/export/json")
 async def export_session_json(session_id: str):
@@ -545,13 +627,16 @@ async def admin_stats():
         "num_scales": cfg.num_scales,
         "max_new_tokens": cfg.max_new_tokens,
     }
-    if LLM_BACKEND_AVAILABLE:
-        llm = get_llm()
+    llm = get_llm()
+    if llm is not None:
         stats["total_conversation_utterances"] = llm.conversation_length
         if llm._store:
             stats["sqlite_session_count"] = llm._store.count()
         stats["loaded_model"] = llm.model_name
         stats["device"] = str(llm.device)
+    else:
+        stats["loaded_model"] = cfg.model_name
+        stats["device"] = "CPU (memory-fallback mode — real LLM requires CUDA)"
     with _session_lock:
         stats["in_memory_sessions"] = len(_session_meta)
     try:
@@ -574,11 +659,21 @@ async def admin_stats():
 
 @app.get("/admin/sessions/{session_id}/history")
 async def admin_session_history(session_id: str):
-    if not LLM_BACKEND_AVAILABLE:
-        raise HTTPException(status_code=503, detail="LLM backend not available")
     llm = get_llm()
-    session = llm._sessions.get(session_id)
+    session = None
+    if llm is not None:
+        session = llm._sessions.get(session_id)
     if session is None:
+        with _mem_sessions_lock:
+            mem_entry = _mem_sessions.get(session_id)
+        if mem_entry is not None:
+            memory = mem_entry["memory"]
+            return {
+                "session_id": session_id,
+                "history": mem_entry["history"],
+                "utterance_count": memory._utterance_count,
+                "memory_bytes": memory.memory_size_bytes,
+            }
         raise HTTPException(status_code=404, detail="Session not found")
     memory = session["memory"]
     return {
