@@ -74,6 +74,7 @@ def get_llm():
                             auto_save_dir=cfg.save_dir,
                             quantize_bits=cfg.quantize_bits,
                             sqlite_path=cfg.sqlite_path,
+                            memory_backend=cfg.memory_backend,
                         )
                         with _llm_instance_lock:
                             _llm_instance = instance
@@ -134,13 +135,23 @@ def _get_embedder():
     return _embedder
 
 def _memory_chat(session_id: str, message: str) -> str:
+    cfg = _get_config()
+    backend = cfg.memory_backend
+
     with _mem_sessions_lock:
         if session_id not in _mem_sessions:
-            from hyper_ssm.conversation_memory import InfiniteContextMemory
-            _mem_sessions[session_id] = {
-                "memory": InfiniteContextMemory(embedding_dim=384, state_dim=64, num_scales=4),
-                "history": [],
-            }
+            if backend == "tree":
+                from hyper_ssm.memory_tree import HyperbolicMemoryTree
+                _mem_sessions[session_id] = {
+                    "memory": HyperbolicMemoryTree(state_dim=64, embed_dim=384),
+                    "history": [],
+                }
+            else:
+                from hyper_ssm.conversation_memory import InfiniteContextMemory
+                _mem_sessions[session_id] = {
+                    "memory": InfiniteContextMemory(embedding_dim=384, state_dim=64, num_scales=4),
+                    "history": [],
+                }
         entry = _mem_sessions[session_id]
 
     embedder = _get_embedder()
@@ -149,24 +160,38 @@ def _memory_chat(session_id: str, message: str) -> str:
     else:
         emb = np.random.randn(384).astype(np.float32)
 
-    entry["memory"].remember(emb)
+    if backend == "tree":
+        entry["memory"].remember(emb, message)
+    else:
+        entry["memory"].remember(emb)
     entry["history"].append({"role": "user", "content": message})
 
-    recalled = entry["memory"].recall_all_scales(emb)
+    if backend == "tree":
+        recalled_items = entry["memory"].recall(emb, top_k=3)
+        recalled = [r["content"] for r in recalled_items if r.get("content")]
+    else:
+        recalled = entry["memory"].recall_all_scales(emb)
     mem_info = entry["memory"].info()
 
     # Build a response that demonstrates memory recall
     turns = len(entry["history"]) // 2 + 1
     if turns == 1:
-        response = f"I hear you. [ICM memory active: {mem_info['memory_bytes']}B, turn 1]"
+        response = f"I hear you. [{backend} memory active: {mem_info['memory_bytes']}B, turn 1]"
     else:
         # Show that something was recalled from previous turns
-        prev = entry["history"][-3]["content"] if len(entry["history"]) >= 3 else ""
-        recall_note = f" (recalled {len(recalled)} scales)" if len(recalled) > 0 else ""
-        response = (
-            f"I remember our conversation. Earlier you said: \"{prev[:80]}\""
-            f"{recall_note}. [ICM: {mem_info['memory_bytes']}B, {turns} turns compressed]"
-        )
+        if backend == "tree" and recalled:
+            recall_str = "; ".join(recalled[:2])
+            response = (
+                f"I remember our conversation. Earlier you mentioned: \"{recall_str[:120]}\""
+                f" [Tree memory: {mem_info['memory_bytes']}B, {mem_info.get('leaves', turns)} facts stored]"
+            )
+        else:
+            prev = entry["history"][-3]["content"] if len(entry["history"]) >= 3 else ""
+            recall_note = f" (recalled {len(recalled)} scales)" if len(recalled) > 0 else ""
+            response = (
+                f"I remember our conversation. Earlier you said: \"{prev[:80]}\""
+                f"{recall_note}. [ICM: {mem_info['memory_bytes']}B, {turns} turns compressed]"
+            )
 
     entry["history"].append({"role": "assistant", "content": response})
     return response, entry["memory"], entry["history"]

@@ -437,16 +437,16 @@ class TestServer:
 
     @pytest.mark.integration
     def test_simulated_fallback(self, server_client):
-        """Server works without a real LLM via simulated responses."""
+        """Server works without a real LLM via memory-powered fallback."""
         resp = server_client.post(
             "/chat",
             json={"session_id": "sim_test", "message": "Test fallback"},
         )
         assert resp.status_code == 200
         body = resp.json()
-        assert "Simulated" in body["response"]
-        # memory_bytes should be 0 when no real LLM is loaded
-        assert body["memory_bytes"] == 0
+        assert body["response"]
+        # memory_bytes should be non-zero with real ICM memory active
+        assert body["memory_bytes"] > 0
 
     @pytest.mark.integration
     def test_invalid_session_404(self, server_client):

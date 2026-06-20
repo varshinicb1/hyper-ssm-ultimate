@@ -27,6 +27,7 @@ class IcmConfig:
     auth_enabled: bool = False
     auth_keys_path: Optional[str] = None
     rate_limit_rpm: int = 60
+    memory_backend: str = "flat"
 
 
 ENV_MAP = {
@@ -47,6 +48,7 @@ ENV_MAP = {
     "auth_enabled": "ICM_AUTH_ENABLED",
     "auth_keys_path": "ICM_AUTH_KEYS_PATH",
     "rate_limit_rpm": "ICM_RATE_LIMIT_RPM",
+    "memory_backend": "ICM_MEMORY_BACKEND",
 }
 
 
@@ -65,6 +67,7 @@ CLI_MAP = {
     "auth_enabled": "auth_enabled",
     "auth_keys_path": "auth_keys_path",
     "rate_limit_rpm": "rate_limit_rpm",
+    "memory_backend": "memory_backend",
 }
 
 
@@ -100,6 +103,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--auth-enabled", action="store_true", help="Enable API key authentication")
     parser.add_argument("--auth-keys-path", help="Path to API keys JSON file")
     parser.add_argument("--rate-limit-rpm", type=int, help="Rate limit requests per minute per key")
+    parser.add_argument("--memory-backend", choices=["flat", "tree"], default="flat", help="Memory backend: flat (O(1)) or tree (O(log N))")
     return parser
 
 

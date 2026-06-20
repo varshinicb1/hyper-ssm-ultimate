@@ -161,9 +161,11 @@ class CliChat:
         model_name: Optional[str] = None,
         embedding_model_name: Optional[str] = None,
         load_path: Optional[str] = None,
+        memory_backend: str = "flat",
     ):
         self.model_name = model_name
         self.embedding_model_name = embedding_model_name
+        self.memory_backend = memory_backend
         self.scale: int = 0
         self.timing_history: list[dict[str, Any]] = []
         self.real_llm: bool = False
@@ -197,7 +199,7 @@ class CliChat:
                 print(c(f"  Initializing IcmLlm (model={self.model_name}) ...", _YELLOW), end="")
                 sys.stdout.flush()
                 t0 = time.perf_counter()
-                self._llm_backend = IcmLlm(model_name=self.model_name)
+                self._llm_backend = IcmLlm(model_name=self.model_name, memory_backend=self.memory_backend)
                 self._llm_backend.create_session(SESSION_ID)
                 dt = time.perf_counter() - t0
                 print(c(f" done in {dt:.1f}s", _GREEN))
@@ -488,12 +490,15 @@ def main():
                         help="Sentence-transformer model for embeddings")
     parser.add_argument("--load", type=str, default=None,
                         help="Load session from pickle file")
+    parser.add_argument("--memory-backend", type=str, default="flat", choices=["flat", "tree"],
+                        help="Memory backend: flat (O(1)) or tree (O(log N))")
     args = parser.parse_args()
 
     app = CliChat(
         model_name=args.model,
         embedding_model_name=args.embedding_model,
         load_path=args.load,
+        memory_backend=args.memory_backend,
     )
     try:
         app.run()
