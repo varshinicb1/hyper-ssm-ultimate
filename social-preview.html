@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0d1117; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
+.card {
+  width: 1280px; height: 640px;
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+  position: relative; overflow: hidden; display: flex;
+}
+/* Grid pattern */
+.grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(48,54,61,0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(48,54,61,0.3) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+/* Glowing orb */
+.orb {
+  position: absolute; width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(88,166,255,0.08) 0%, transparent 70%);
+  top: -100px; right: -100px;
+}
+.orb2 {
+  position: absolute; width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(63,185,80,0.05) 0%, transparent 70%);
+  bottom: -100px; left: -100px;
+}
+/* Top accent bar */
+.accent-bar { position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #58a6ff, #3fb950); }
+.accent-bar-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #3fb950, #58a6ff); }
+
+/* Left content */
+.left { position: relative; z-index: 1; flex: 1; padding: 80px 60px; display: flex; flex-direction: column; justify-content: center; }
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3);
+  border-radius: 100px; padding: 6px 16px; font-size: 13px; color: #58a6ff;
+  width: fit-content; margin-bottom: 24px;
+}
+.badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #3fb950; }
+.main-num { font-size: 88px; font-weight: 800; color: #58a6ff; letter-spacing: -2px; line-height: 1; margin-bottom: 8px; }
+.main-unit { font-size: 28px; font-weight: 400; color: #8b949e; margin-bottom: 20px; }
+.main-tag { font-size: 32px; font-weight: 700; color: #c9d1d9; margin-bottom: 8px; }
+.main-desc { font-size: 18px; color: #8b949e; max-width: 500px; line-height: 1.5; }
+.divider { width: 60px; height: 3px; background: linear-gradient(90deg, #58a6ff, transparent); margin: 24px 0; }
+
+/* Right content */
+.right { position: relative; z-index: 1; width: 480px; padding: 80px 40px; display: flex; flex-direction: column; justify-content: center; }
+.feature { display: flex; align-items: center; gap: 14px; padding: 12px 16px; margin-bottom: 6px; border-radius: 8px; transition: background 0.2s; }
+.feature:hover { background: rgba(255,255,255,0.03); }
+.f-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.f-icon.blue { background: rgba(88,166,255,0.15); color: #58a6ff; }
+.f-icon.green { background: rgba(63,185,80,0.15); color: #3fb950; }
+.f-icon.purple { background: rgba(163,113,247,0.15); color: #a371f7; }
+.f-icon.orange { background: rgba(210,153,34,0.15); color: #d29922; }
+.f-text { font-size: 15px; color: #c9d1d9; }
+.f-sub { font-size: 12px; color: #8b949e; }
+
+/* Bottom CTA */
+.cta {
+  position: absolute; bottom: 60px; left: 60px; z-index: 1;
+  display: flex; align-items: center; gap: 16px;
+}
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #238636; color: white; border: none;
+  padding: 12px 28px; border-radius: 8px; font-size: 16px; font-weight: 600;
+  cursor: pointer; text-decoration: none; transition: transform 0.2s;
+}
+.cta-btn:hover { transform: translateY(-1px); }
+.cta-url { font-family: monospace; font-size: 16px; color: #d29922; }
+
+/* Stats row at bottom */
+.stats-row {
+  position: absolute; bottom: 60px; right: 40px; z-index: 1;
+  display: flex; gap: 32px;
+}
+.stat-item { text-align: center; }
+.stat-num { font-size: 24px; font-weight: 700; color: #3fb950; }
+.stat-label { font-size: 12px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="grid"></div>
+  <div class="orb"></div>
+  <div class="orb2"></div>
+  <div class="accent-bar"></div>
+  <div class="accent-bar-bottom"></div>
+
+  <div class="left">
+    <div class="badge">Open Source · Apache 2.0</div>
+    <div class="main-num">260 bytes</div>
+    <div class="main-unit">per session, forever</div>
+    <div class="main-tag">O(1) Memory for LLMs</div>
+    <div class="main-desc">Replace the KV-cache with a fixed-size hyperbolic state vector. Works with any HuggingFace model.</div>
+    <div class="divider"></div>
+  </div>
+
+  <div class="right">
+    <div class="feature"><div class="f-icon blue">&#9889;</div><div><div class="f-text">Any HuggingFace Model</div><div class="f-sub">GPT-2, Qwen, Phi-3, Gemma, TinyLlama</div></div></div>
+    <div class="feature"><div class="f-icon green">&#9881;</div><div><div class="f-text">Quantization</div><div class="f-sub">4-bit NF4 &amp; 8-bit via bitsandbytes</div></div></div>
+    <div class="feature"><div class="f-icon purple">&#9744;</div><div><div class="f-text">Persistent Sessions</div><div class="f-sub">SQLite — survives server restarts</div></div></div>
+    <div class="feature"><div class="f-icon orange">&#128274;</div><div><div class="f-text">API Key Auth</div><div class="f-sub">Bearer tokens + rate limiting</div></div></div>
+    <div class="feature"><div class="f-icon blue">&#9733;</div><div><div class="f-text">68 Passing Tests</div><div class="f-sub">Unit + integration, CI-verified</div></div></div>
+  </div>
+
+  <div class="cta">
+    <a class="cta-btn" href="#">&#9660; pip install &amp; try now</a>
+    <span class="cta-url">github.com/varshinicb1/hyper-ssm-ultimate</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num">68</div><div class="stat-label">Tests</div></div>
+    <div class="stat-item"><div class="stat-num">9</div><div class="stat-label">Presets</div></div>
+    <div class="stat-item"><div class="stat-num">260B</div><div class="stat-label">State</div></div>
+  </div>
+</div>
+</body>
+</html>
