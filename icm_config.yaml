@@ -1,0 +1,10 @@
+model_name: "gpt2"
+embedder_name: "all-MiniLM-L6-v2"
+port: 8000
+max_sessions: 100
+session_ttl: 3600
+state_dim: 64
+num_scales: 4
+
+# Model quantization (set to 4 or 8 to enable bitsandbytes quantization)
+# quantize_bits: 4

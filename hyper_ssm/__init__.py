@@ -31,11 +31,20 @@ from .tiled_compressor import (
     TiledFractalCompressor,
     ProductionTiledCompressor,
     is_rust_kernels_available,
-    _RUST_AVAILABLE as RUST_KERNELS_AVAILABLE,  # public alias
+    _RUST_AVAILABLE as RUST_KERNELS_AVAILABLE,
     PerformanceCounters,
 )
 
-__version__ = "2026.1.0-ultimate-pinnacle"  # Candidate 3: absolute best Python engineering quality
+from .hierarchical_memory import (
+    HierarchicalHyperbolicMemory,
+    GeometricMemoryCell,
+    exp_map,
+    log_map,
+    check_manifold,
+    project_to_hyperboloid,
+)
+
+__version__ = "2026.6.0-hhm"
 
 __all__ = [
     "HyperSSM",
@@ -61,4 +70,10 @@ __all__ = [
     "PerformanceCounters",
     "is_rust_kernels_available",
     "RUST_KERNELS_AVAILABLE",
+    "HierarchicalHyperbolicMemory",
+    "GeometricMemoryCell",
+    "exp_map",
+    "log_map",
+    "check_manifold",
+    "project_to_hyperboloid",
 ]

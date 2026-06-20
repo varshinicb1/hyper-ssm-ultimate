@@ -76,21 +76,19 @@ def _get_cuda_lorentz():
         _cuda_lorentz_product = get_lorentz_product()
     return _cuda_lorentz_product
 
-def lorentz_inner(u: torch.Tensor, v: torch.Tensor, keepdim: bool = True) -> torch.Tensor:
-    """Numerically stable Lorentz (Minkowski) inner product."""
-    # <u, v>_L = -u0 v0 + sum_{i>=1} ui vi
-    m = u * v
-    if keepdim:
-        res = torch.sum(m, dim=-1, keepdim=True) - 2 * m[..., 0:1]
-    else:
-        res = torch.sum(m, dim=-1) - 2 * m[..., 0]
+def lorentz_inner(u: torch.Tensor, v: torch.Tensor, keepdim: bool = False) -> torch.Tensor:
+    orig_dtype = u.dtype
+    if orig_dtype in (torch.bfloat16, torch.float16):
+        u = u.float()
+        v = v.float()
+    prod = u * v
+    time_term = prod[..., 0:1] if keepdim else prod[..., 0]
+    res = torch.sum(prod, dim=-1, keepdim=keepdim) - 2 * time_term
+    if orig_dtype in (torch.bfloat16, torch.float16):
+        res = res.to(orig_dtype)
     return res
 
 def lorentz_product(u, v, keepdim=True):
-    r"""
-    Computes the Lorentzian scalar product between two vectors u and v.
-    Formula: <u, v>_L = -u_0 * v_0 + \sum_{i=1}^n u_i * v_i
-    """
     return lorentz_inner(u, v, keepdim=keepdim)
 
 def l_norm(u, keepdim=False):
@@ -297,24 +295,7 @@ class FractalStateCompressor(nn.Module):
 
 # =============================================================================
 # PRODUCTION-GRADE MANIFOLD SAFETY & NUMERICAL UTILITIES (2026 Pinnacle)
-# These are the foundation for "bulletproof" low-precision + long generation.
-# Used by TiledFractalCompressor, model generation APIs, and training.
 # =============================================================================
-
-def lorentz_inner(u: torch.Tensor, v: torch.Tensor, keepdim: bool = False) -> torch.Tensor:
-    """Numerically stable Lorentz inner product <u,v>_L = -u0 v0 + sum ui vi (matches lorentz_product style)."""
-    orig_dtype = u.dtype
-    if orig_dtype in (torch.bfloat16, torch.float16):
-        u = u.float()
-        v = v.float()
-    prod = u * v
-    if keepdim:
-        res = torch.sum(prod, dim=-1, keepdim=True) - 2 * prod[..., 0:1]
-    else:
-        res = torch.sum(prod, dim=-1) - 2 * prod[..., 0]
-    if orig_dtype in (torch.bfloat16, torch.float16):
-        res = res.to(orig_dtype)
-    return res
 
 
 
