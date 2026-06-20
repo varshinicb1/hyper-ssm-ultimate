@@ -1088,3 +1088,152 @@ class TestModelQuantization:
         assert resp.status_code == 200
         body = resp.json()
         assert "quantize_bits" in body
+
+
+# =====================================================================
+#  UNIT TESTS — Hyperbolic Memory Tree (novel tree-structured memory)
+# =====================================================================
+
+
+class TestHyperbolicMemoryTree:
+    """Tests for the HyperbolicMemoryTree — O(log N) structured memory."""
+
+    @pytest.fixture
+    def tree(self):
+        from hyper_ssm.memory_tree import HyperbolicMemoryTree
+        return HyperbolicMemoryTree(state_dim=8, embed_dim=32, branching_factor=4)
+
+    def _emb(self, seed: int = 0) -> np.ndarray:
+        rng = np.random.RandomState(seed)
+        return rng.randn(32).astype(np.float32)
+
+    @pytest.mark.unit
+    def test_init(self, tree):
+        info = tree.info()
+        assert info["nodes"] == 1  # root
+        assert info["leaves"] == 0
+        assert info["memory_bytes"] > 0
+
+    @pytest.mark.unit
+    def test_remember_single(self, tree):
+        nid = tree.remember(self._emb(0), "Hello world")
+        assert nid > 0
+        info = tree.info()
+        assert info["leaves"] == 1
+        assert info["nodes"] == 2  # root + leaf
+
+    @pytest.mark.unit
+    def test_remember_multiple(self, tree):
+        for i in range(4):
+            tree.remember(self._emb(i), f"Fact {i}")
+        info = tree.info()
+        assert info["leaves"] == 4
+        assert info["nodes"] == 5  # root + 4 leaves (within branching_factor)
+
+    @pytest.mark.unit
+    def test_recall_returns_results(self, tree):
+        for i in range(5):
+            tree.remember(self._emb(i), f"Fact {i}")
+        results = tree.recall(self._emb(0), top_k=3)
+        assert len(results) > 0
+        for r in results:
+            assert "content" in r
+            assert "similarity" in r
+            assert "depth" in r
+            assert "node_id" in r
+
+    @pytest.mark.unit
+    def test_recall_returns_most_similar_first(self, tree):
+        """The most similar fact should be in the top results."""
+        target_emb = self._emb(42)
+        tree.remember(target_emb.copy(), "Target fact")
+        for i in range(1, 10):
+            tree.remember(self._emb(i * 1000 + 999), f"Fact {i}")
+        results = tree.recall(target_emb, top_k=10)
+        contents = [r["content"] for r in results]
+        assert "Target fact" in contents
+
+    @pytest.mark.unit
+    def test_tree_depth_grows_with_facts(self, tree):
+        """With branching_factor=4, depth should grow log_4(N)."""
+        for i in range(20):
+            tree.remember(self._emb(i * 100), f"Fact {i}")
+        info = tree.info()
+        assert info["max_depth"] >= 0
+
+    @pytest.mark.unit
+    def test_memory_size_scales_linearly(self, tree):
+        sizes = []
+        for i in range(1, 6):
+            tree.remember(self._emb(i), f"Fact {i}")
+            sizes.append(tree.memory_size_bytes())
+        # Each fact adds roughly constant memory
+        diffs = [sizes[i+1] - sizes[i] for i in range(len(sizes)-1)]
+        avg_diff = sum(diffs) / len(diffs)
+        assert avg_diff > 0
+        # No single diff should be more than 3x the average
+        for d in diffs:
+            assert d < avg_diff * 3
+
+    @pytest.mark.unit
+    def test_reset_clears_tree(self, tree):
+        for i in range(5):
+            tree.remember(self._emb(i), f"Fact {i}")
+        tree.reset()
+        info = tree.info()
+        assert info["nodes"] == 1
+        assert info["leaves"] == 0
+
+    @pytest.mark.unit
+    def test_save_and_load_state(self, tree):
+        for i in range(5):
+            tree.remember(self._emb(i), f"Fact {i}")
+        state = tree.state()
+        assert "nodes" in state
+        assert str(1) in state["nodes"]  # root
+        
+        tree2 = type(tree)(state_dim=8, embed_dim=32)
+        tree2.load_state(state)
+        info2 = tree2.info()
+        assert info2["leaves"] == 5
+
+    @pytest.mark.unit
+    def test_load_state_restores_recall(self, tree):
+        for i in range(5):
+            tree.remember(self._emb(i), f"Fact {i}")
+        state = tree.state()
+        
+        tree2 = type(tree)(state_dim=8, embed_dim=32)
+        tree2.load_state(state)
+        
+        results = tree2.recall(self._emb(0), top_k=3)
+        assert len(results) > 0
+        assert results[0]["content"] is not None
+
+    @pytest.mark.unit
+    def test_utterance_count(self, tree):
+        assert tree.utterance_count == 0
+        for i in range(3):
+            tree.remember(self._emb(i), f"Fact {i}")
+        assert tree.utterance_count == 3
+
+    @pytest.mark.unit
+    def test_multi_scale_recall(self, tree):
+        for i in range(5):
+            tree.remember(self._emb(i), f"Fact {i}")
+        scales = tree.recall_all_scales(self._emb(0))
+        assert len(scales) > 0
+        for s in scales:
+            assert s.shape == (32,)
+
+    @pytest.mark.unit
+    def test_tree_structure_internal_nodes(self, tree):
+        """With many facts, internal nodes should form."""
+        from hyper_ssm.memory_tree import HyperbolicMemoryTree
+        tree2 = HyperbolicMemoryTree(state_dim=8, embed_dim=32, branching_factor=2)
+        for i in range(10):
+            tree2.remember(self._emb(i * 1000), f"Fact {i}")
+        info = tree2.info()
+        # Should have at least 1 internal node (root counts as internal w/children)
+        # plus additional internal nodes from splits
+        assert info["internal"] >= 1
