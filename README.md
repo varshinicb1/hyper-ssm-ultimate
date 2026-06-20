@@ -8,6 +8,7 @@
     <a href="#"><img src="https://img.shields.io/badge/Tests-68_passing-brightgreen" alt="Tests" /></a>
     <a href="https://pypi.org/project/icm/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python" /></a>
     <a href="https://huggingface.co/"><img src="https://img.shields.io/badge/HuggingFace-Ready-FFD21E" alt="HF" /></a>
+    <a href="icm_demo.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Colab" /></a>
   </p>
 </div>
 
