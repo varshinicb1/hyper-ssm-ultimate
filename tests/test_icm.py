@@ -1166,7 +1166,7 @@ class TestHyperbolicMemoryTree:
         sizes = []
         for i in range(1, 6):
             tree.remember(self._emb(i), f"Fact {i}")
-            sizes.append(tree.memory_size_bytes())
+            sizes.append(tree.memory_size_bytes)
         # Each fact adds roughly constant memory
         diffs = [sizes[i+1] - sizes[i] for i in range(len(sizes)-1)]
         avg_diff = sum(diffs) / len(diffs)

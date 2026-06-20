@@ -60,6 +60,7 @@ class IcmLlm:
         embedder_name: str = "all-MiniLM-L6-v2",
         quantize_bits: Optional[int] = None,
         sqlite_path: Optional[str] = None,
+        memory_backend: str = "flat",
     ):
         self.model_name = model_name
         self.state_dim = state_dim
@@ -69,6 +70,7 @@ class IcmLlm:
         self.embedder_name = embedder_name
         self.quantize_bits = quantize_bits
         self.sqlite_path = sqlite_path
+        self.memory_backend = memory_backend
 
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -107,13 +109,22 @@ class IcmLlm:
                 data = self._store.load(sid)
                 if data is None:
                     continue
-                memory = InfiniteContextMemory(
-                    embedding_dim=384,
-                    state_dim=data["state_dim"],
-                    num_scales=data["num_scales"],
-                    device=torch.device("cpu"),
-                )
-                memory.load_state(data["memory_state"])
+                backend = data.get("memory_backend", "flat")
+                if backend == "tree":
+                    from .memory_tree import HyperbolicMemoryTree
+                    memory = HyperbolicMemoryTree(
+                        state_dim=data["state_dim"],
+                        embed_dim=384,
+                    )
+                else:
+                    memory = InfiniteContextMemory(
+                        embedding_dim=384,
+                        state_dim=data["state_dim"],
+                        num_scales=data.get("num_scales", self.num_scales),
+                        device=torch.device("cpu"),
+                    )
+                if "memory_state" in data:
+                    memory.load_state(data["memory_state"])
                 self._sessions[sid] = {
                     "memory": memory,
                     "history": data["history"],
@@ -247,12 +258,20 @@ class IcmLlm:
     def create_session(self, session_id: str) -> Dict[str, Any]:
         if session_id in self._sessions:
             return self._sessions[session_id]
-        memory = InfiniteContextMemory(
-            embedding_dim=384,
-            state_dim=self.state_dim,
-            num_scales=self.num_scales,
-            device=torch.device("cpu"),
-        )
+        if self.memory_backend == "tree":
+            from .memory_tree import HyperbolicMemoryTree
+            memory = HyperbolicMemoryTree(
+                state_dim=self.state_dim,
+                embed_dim=384,
+                max_depth=self.num_scales + 2,
+            )
+        else:
+            memory = InfiniteContextMemory(
+                embedding_dim=384,
+                state_dim=self.state_dim,
+                num_scales=self.num_scales,
+                device=torch.device("cpu"),
+            )
         session = {"memory": memory, "history": []}
         self._sessions[session_id] = session
         return session
@@ -270,20 +289,31 @@ class IcmLlm:
 
         # a. Embed user message, compress into memory
         user_emb = self._embed(message)
-        memory.remember(user_emb)
 
-        # b. Recall at all scales using user message as query
-        recalled = memory.recall_all_scales(user_emb)
+        if self.memory_backend == "tree":
+            memory.remember(user_emb, message)
+        else:
+            memory.remember(user_emb)
 
-        # c. Build prompt with bounded token budget
-        prompt = self._build_prompt(message, recalled, history)
+        # b. Recall using user message as query
+        if self.memory_backend == "tree":
+            recalled_items = memory.recall(user_emb, top_k=5)
+            recalled_texts = [r["content"] for r in recalled_items if r.get("content")]
+            prompt = self._build_prompt(message, [], history, recalled_texts=recalled_texts)
+        else:
+            recalled_vecs = memory.recall_all_scales(user_emb)
+            prompt = self._build_prompt(message, recalled_vecs, history)
 
         # d. Generate response
         response = self._generate(prompt)
 
         # e. Embed assistant response, compress into memory
         resp_emb = self._embed(response)
-        memory.remember(resp_emb)
+
+        if self.memory_backend == "tree":
+            memory.remember(resp_emb, response)
+        else:
+            memory.remember(resp_emb)
 
         # Update history
         history.append({"role": "user", "content": message})
@@ -311,13 +341,20 @@ class IcmLlm:
 
         # a. Embed user message, compress into memory
         user_emb = self._embed(message)
-        memory.remember(user_emb)
 
-        # b. Recall at all scales using user message as query
-        recalled = memory.recall_all_scales(user_emb)
+        if self.memory_backend == "tree":
+            memory.remember(user_emb, message)
+        else:
+            memory.remember(user_emb)
 
-        # c. Build prompt with bounded token budget
-        prompt = self._build_prompt(message, recalled, history)
+        # b. Recall using user message as query
+        if self.memory_backend == "tree":
+            recalled_items = memory.recall(user_emb, top_k=5)
+            recalled_texts = [r["content"] for r in recalled_items if r.get("content")]
+            prompt = self._build_prompt(message, [], history, recalled_texts=recalled_texts)
+        else:
+            recalled_vecs = memory.recall_all_scales(user_emb)
+            prompt = self._build_prompt(message, recalled_vecs, history)
 
         # d. Generate response with streaming
         from transformers import TextIteratorStreamer
@@ -357,7 +394,11 @@ class IcmLlm:
         # e. Embed assistant response, compress into memory
         response = generated_text.strip()
         resp_emb = self._embed(response)
-        memory.remember(resp_emb)
+
+        if self.memory_backend == "tree":
+            memory.remember(resp_emb, response)
+        else:
+            memory.remember(resp_emb)
 
         # Update history
         history.append({"role": "user", "content": message})
@@ -375,12 +416,14 @@ class IcmLlm:
         try:
             memory = session["memory"]
             history = session["history"]
+            state = memory.state()
             self._store.save(
                 session_id=session_id,
-                memory_state=memory.state(),
+                memory_state=state,
                 history=history,
                 state_dim=self.state_dim,
                 num_scales=self.num_scales,
+                memory_backend=self.memory_backend,
                 turn_count=memory._utterance_count,
             )
         except Exception:
@@ -407,6 +450,7 @@ class IcmLlm:
             "history": session["history"],
             "state_dim": self.state_dim,
             "num_scales": self.num_scales,
+            "memory_backend": self.memory_backend,
         }
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         with open(path, "wb") as f:
@@ -415,12 +459,20 @@ class IcmLlm:
     def load_session(self, session_id: str, path: str) -> Dict[str, Any]:
         with open(path, "rb") as f:
             data = pickle.load(f)
-        memory = InfiniteContextMemory(
-            embedding_dim=384,
-            state_dim=data.get("state_dim", self.state_dim),
-            num_scales=data.get("num_scales", self.num_scales),
-            device=torch.device("cpu"),
-        )
+        backend = data.get("memory_backend", "flat")
+        if backend == "tree":
+            from .memory_tree import HyperbolicMemoryTree
+            memory = HyperbolicMemoryTree(
+                state_dim=data.get("state_dim", self.state_dim),
+                embed_dim=384,
+            )
+        else:
+            memory = InfiniteContextMemory(
+                embedding_dim=384,
+                state_dim=data.get("state_dim", self.state_dim),
+                num_scales=data.get("num_scales", self.num_scales),
+                device=torch.device("cpu"),
+            )
         memory.load_state(data["memory_state"])
         session = {"memory": memory, "history": data["history"]}
         self._sessions[session_id] = session
@@ -438,14 +490,20 @@ class IcmLlm:
         user_message: str,
         recalled: List[np.ndarray],
         history: List[Dict[str, str]],
+        recalled_texts: Optional[List[str]] = None,
     ) -> str:
         """Build a prompt bounded by the model's max token budget."""
         tokenizer = self._tokenizer
 
-        # Fixed preamble: system + multi-scale recall
-        preamble = f"System: {self.system_prompt}\n\nInfinite Memory Recall:\n"
-        for i, ((label, _), vec) in enumerate(zip(self.SCALE_LABELS, recalled)):
-            preamble += f"  [{label}] {self._vec_to_text(vec)}\n"
+        # Fixed preamble: system + memory recall
+        if recalled_texts:
+            preamble = f"System: {self.system_prompt}\n\nMemory Recall:\n"
+            for t in recalled_texts:
+                preamble += f"  - {t}\n"
+        else:
+            preamble = f"System: {self.system_prompt}\n\nInfinite Memory Recall:\n"
+            for i, ((label, _), vec) in enumerate(zip(self.SCALE_LABELS, recalled)):
+                preamble += f"  [{label}] {self._vec_to_text(vec)}\n"
 
         # Tail: user message + assistant prefix
         tail = f"\nUser: {user_message}\n\nAssistant:"

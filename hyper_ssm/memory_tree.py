@@ -308,6 +308,13 @@ class HyperbolicMemoryTree:
         
         return leaf.id
     
+    def _update_subtree_depth(self, node_id: int, new_depth: int):
+        """Recursively set depth for a node and all its descendants."""
+        node = self._nodes[node_id]
+        node.depth = new_depth
+        for cid in node.child_ids:
+            self._update_subtree_depth(cid, new_depth + 1)
+    
     def _split_and_insert(
         self,
         parent_id: int,
@@ -334,6 +341,7 @@ class HyperbolicMemoryTree:
         for cid in moved:
             child = self._nodes[cid]
             child.parent_id = internal.id
+            self._update_subtree_depth(cid, internal.depth + 1)
             internal.child_ids.append(cid)
         
         # Set internal state as average of moved children
@@ -640,9 +648,15 @@ class HyperbolicMemoryTree:
             "embed_dim": self.embed_dim,
         }
     
+    @property
     def memory_size_bytes(self) -> int:
-        """Total bytes used by the tree (for compatibility)."""
+        """Total bytes used by the tree."""
         return sum(n.memory_bytes() for n in self._nodes.values())
+    
+    @property
+    def _utterance_count(self) -> int:
+        """Alias for utterance_count (compatibility with flat memory)."""
+        return self.utterance_count
     
     @property
     def utterance_count(self) -> int:
