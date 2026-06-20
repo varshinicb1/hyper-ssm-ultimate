@@ -44,7 +44,7 @@ from .hierarchical_memory import (
     project_to_hyperboloid,
 )
 
-__version__ = "2026.6.0-hhm"
+__version__ = "0.1.0"
 
 __all__ = [
     "HyperSSM",

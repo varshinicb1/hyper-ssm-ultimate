@@ -641,7 +641,10 @@ async def admin_delete_key(key_id: str):
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
-if __name__ == "__main__":
+def main():
     import uvicorn
     cfg = get_config()
     uvicorn.run(app, host=cfg.host, port=cfg.port)
+
+if __name__ == "__main__":
+    main()

@@ -9,6 +9,8 @@
     <a href="https://pypi.org/project/icm/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python" /></a>
     <a href="https://huggingface.co/"><img src="https://img.shields.io/badge/HuggingFace-Ready-FFD21E" alt="HF" /></a>
     <a href="icm_demo.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Colab" /></a>
+    <a href="https://pypi.org/project/icm-llm/"><img src="https://img.shields.io/pypi/v/icm-llm?color=brightgreen" alt="PyPI" /></a>
+    <a href="https://pypi.org/project/icm-llm/"><img src="https://img.shields.io/pypi/dm/icm-llm?label=downloads" alt="Downloads" /></a>
   </p>
 </div>
 
@@ -20,14 +22,15 @@ Try ICM right now — 4 ways:
 
 | Method | Command |
 |:-------|:--------|
+| **pip** | `pip install icm-llm` |
 | **Docker** (full stack) | `docker compose up -d && open http://localhost:8000` |
 | **Colab** (browser) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](icm_demo.ipynb) |
-| **CLI** (local) | `python icm_demo.py` or `python applications/cli_chat.py` |
-| **Python** (code) | `pip install -r requirements.txt && python -c "from hyper_ssm.conversation_memory import InfiniteContextMemory; print(InfiniteContextMemory().__doc__)"` |
+| **CLI** (local) | `icm-demo` or `icm-chat` or `icm-server` |
+| **Python** (code) | `pip install icm-llm && python -c "from hyper_ssm.conversation_memory import InfiniteContextMemory; m = InfiniteContextMemory(); print(f'{m.memory_size_bytes}B fixed-state O(1) memory')"` |
 
 ```bash
 # One-liner to see O(1) memory in action:
-python icm_demo.py
+pip install icm-llm && icm-demo
 # Output: 260 bytes per turn — fixed, forever.
 ```
 
@@ -70,17 +73,17 @@ The hyperbolic space (Lorentz model) has **exponential representational capacity
 ## Quick Start
 
 ```bash
-# 1. Install
-pip install -r requirements.txt
+# 1. Install (60 seconds)
+pip install icm-llm
 
 # 2. Verify O(1) memory (10 seconds)
-python icm_demo.py
+icm-demo
 
 # 3. Chat in the terminal
-python applications/cli_chat.py
+icm-chat
 
 # 4. Start the web server
-python applications/icm_server.py
+icm-server
 # → http://localhost:8000
 
 # Or everything at once with Docker:
