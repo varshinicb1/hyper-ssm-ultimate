@@ -34,7 +34,9 @@ pip install icm-llm && icm-demo
 # Output: 260 bytes per turn — fixed, forever.
 ```
 
-![ICM Demo](social-preview.png)
+![ICM Demo](scripts/demo.gif)
+
+![ICM Social Preview](social-preview.png)
 
 ---
 
