@@ -6,6 +6,7 @@ dist/
 build/
 *.egg
 *.so
+*.pyd
 .env
 *.db
 *.sqlite
@@ -13,9 +14,19 @@ build/
 logs/
 server_err.txt
 server_out.txt
+server_err.log
+server_out.log
 eval_results/
+eval_results_*.json
+*.pt
+checkpoints/
 .DS_Store
 Thumbs.db
 *.pkl
 *.pickle
 icm_keys.json
+rust_kernels/target/
+project-aether/
+hyper_ssm_c_code.pt
+icm_quick_demo.py
+demonstrate_hhm.py

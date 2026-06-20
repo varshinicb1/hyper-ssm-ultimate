@@ -1,0 +1,48 @@
+# Large-scale Hyper-SSM + Geometry-Aware Fusion config for Project Aether
+# Designed for serious GPU runs (A100/H100 cluster or multi-GPU node)
+
+model:
+  hidden_size: 768
+  num_layers: 24
+  attention_every_n: 6
+  use_tiled_compressor: true
+  use_geometry_fusion: true
+  fusion_mode: "tangent_gated"
+  gate_type: "per_channel"
+  low_rank_fusion: 128   # efficiency for large hidden size
+
+training:
+  max_steps: 25000
+  batch_size: 8
+  seq_len: 2048
+  grad_accum: 4
+  lr: 2e-4
+  weight_decay: 0.05
+  warmup_steps: 1000
+  precision: "bf16"
+  compile_model: false   # enable on A100+ with torch 2.4+
+  autotune_compile: true
+
+data:
+  corpus_path: "data/c_corpus.txt"   # or larger scientific corpus
+  aether_corpus_dir: "project-aether/data/papers/real_corpus_200"  # 200 real(ish) hydrothermal papers
+
+aether:
+  use_fused_memory: true
+  use_fused_retrieval_in_hypotheses: true
+  use_fused_retrieval_in_planning: true
+
+hardware:
+  # For torchrun / Accelerate
+  num_gpus: 4
+  per_device_batch: 2
+
+logging:
+  log_interval: 50
+  eval_interval: 1000
+  save_interval: 2000
+  rich_jsonl: true
+  track_fused_vs_nonfused_metrics: true
+
+# Launch example:
+# accelerate launch --multi_gpu --num_processes 4 training/train_hybrid_ultimate.py --config configs/large_fused_hyper_ssm_aether.yaml
