@@ -109,7 +109,7 @@ class IcmLlm:
                 data = self._store.load(sid)
                 if data is None:
                     continue
-                backend = data.get("memory_backend", "flat")
+                backend = data.get("memory_backend") or data.get("metadata", {}).get("memory_backend", "flat")
                 if backend == "tree":
                     from .memory_tree import HyperbolicMemoryTree
                     memory = HyperbolicMemoryTree(
@@ -423,7 +423,7 @@ class IcmLlm:
                 history=history,
                 state_dim=self.state_dim,
                 num_scales=self.num_scales,
-                memory_backend=self.memory_backend,
+                metadata={"memory_backend": self.memory_backend},
                 turn_count=memory._utterance_count,
             )
         except Exception:
