@@ -161,6 +161,7 @@ class HyperbolicMemoryTree:
         self._node_counter = 0
         self._nodes: Dict[int, MemoryNode] = {}
         self._root_id: Optional[int] = None
+        self._dirty_set: set = set()  # internal nodes needing ancestor recompute
         
         # Input projection (embed_dim -> state_dim)
         self._input_proj = torch.randn(state_dim, embed_dim, dtype=torch.float32) / (embed_dim ** 0.5)
@@ -232,8 +233,8 @@ class HyperbolicMemoryTree:
         else:
             leaf_id = self._create_leaf(emb_t, projected, query_hyp, content, parent_id)
         
-        # Update ancestor states
-        self._update_ancestors(leaf_id)
+        # Mark ancestors dirty (deferred batch update)
+        self._mark_dirty(leaf_id)
         
         # Prune if over capacity
         if len(self._nodes) > self.max_nodes:
@@ -272,7 +273,8 @@ class HyperbolicMemoryTree:
         return path
     
     def _best_child(self, parent_id: int, query_hyp: torch.Tensor) -> Optional[int]:
-        """Find the child closest to query (lowest hyperbolic_similarity)."""
+        """Find the child closest to query (lowest hyperbolic_similarity).
+        Uses child.key which is already exp_map(proj) for internal nodes."""
         parent = self._nodes[parent_id]
         if not parent.child_ids:
             return None
@@ -282,19 +284,9 @@ class HyperbolicMemoryTree:
         
         for cid in parent.child_ids:
             child = self._nodes[cid]
-            if child.is_leaf:
-                child_key = child.key
-            else:
-                child_key = child.proj
-            
-            if child_key is None:
+            if child.key is None:
                 continue
-            
-            if child.is_leaf:
-                sim = hyperbolic_similarity(query_hyp, child_key.unsqueeze(0)).item()
-            else:
-                hp = exp_map(child_key.unsqueeze(0))
-                sim = hyperbolic_similarity(query_hyp, hp).item()
+            sim = hyperbolic_similarity(query_hyp, child.key.unsqueeze(0)).item()
             if sim < best_sim:
                 best_sim = sim
                 best_id = cid
@@ -452,16 +444,14 @@ class HyperbolicMemoryTree:
             child_states = [self._nodes[cid].state for cid in group if self._nodes[cid].state is not None]
             child_projs = [self._nodes[cid].proj for cid in group if self._nodes[cid].proj is not None]
             
-            # Hyperbolic state: average in tangent space (partial info preserved)
+            # Hyperbolic state: average in tangent space (batch log_map)
             if child_states:
-                logs = [log_map(s.unsqueeze(0)).squeeze(0) for s in child_states]
-                avg_log = torch.stack(logs).mean(dim=0)
+                avg_log = log_map(torch.stack(child_states)).mean(dim=0)
                 node.state = exp_map(avg_log.unsqueeze(0)).squeeze(0)
             
             # Euclidean key: average projected embeddings (direction preserved!)
             if child_projs:
-                projs = torch.stack(child_projs)
-                node.proj = projs.mean(dim=0)
+                node.proj = torch.stack(child_projs).mean(dim=0)
                 node.key = exp_map(node.proj.unsqueeze(0)).squeeze(0)
         
         # Replace parent's children with these two internal nodes
@@ -503,7 +493,7 @@ class HyperbolicMemoryTree:
     
     def _update_ancestors(self, node_id: int):
         """Propagate the new leaf's information up through all ancestors.
-        Each internal node merges its children's projections into its own."""
+        Batch all children's states/projs for a single vectorized call."""
         current_id = self._nodes[node_id].parent_id
         while current_id is not None:
             node = self._nodes[current_id]
@@ -517,16 +507,51 @@ class HyperbolicMemoryTree:
                     children_projs.append(child.proj)
             
             if children_states:
-                logs = [log_map(s.unsqueeze(0)).squeeze(0) for s in children_states]
-                avg_log = torch.stack(logs).mean(dim=0)
+                logs = log_map(torch.stack(children_states))
+                avg_log = logs.mean(dim=0)
                 node.state = exp_map(avg_log.unsqueeze(0)).squeeze(0)
             
             if children_projs:
-                projs = torch.stack(children_projs)
-                node.proj = projs.mean(dim=0)
+                node.proj = torch.stack(children_projs).mean(dim=0)
                 node.key = exp_map(node.proj.unsqueeze(0)).squeeze(0)
             
             current_id = node.parent_id
+    
+    def _mark_dirty(self, node_id: int):
+        """Mark all ancestors of node_id as needing recompute (deferred)."""
+        current_id = self._nodes[node_id].parent_id
+        while current_id is not None:
+            self._dirty_set.add(current_id)
+            current_id = self._nodes[current_id].parent_id
+    
+    def _flush_updates(self):
+        """Recompute all dirty internal nodes bottom-up (deepest first)."""
+        # Sort by depth descending so children are processed before parents
+        sorted_dirty = sorted(self._dirty_set, key=lambda nid: self._nodes[nid].depth, reverse=True)
+        self._dirty_set.clear()
+        for nid in sorted_dirty:
+            self._update_single_node(nid)
+    
+    def _update_single_node(self, node_id: int):
+        """Recompute one internal node's state/proj/key from its children."""
+        node = self._nodes[node_id]
+        children_states = []
+        children_projs = []
+        for cid in node.child_ids:
+            child = self._nodes[cid]
+            if child.state is not None:
+                children_states.append(child.state)
+            if child.proj is not None:
+                children_projs.append(child.proj)
+        
+        if children_states:
+            logs = log_map(torch.stack(children_states))
+            avg_log = logs.mean(dim=0)
+            node.state = exp_map(avg_log.unsqueeze(0)).squeeze(0)
+        
+        if children_projs:
+            node.proj = torch.stack(children_projs).mean(dim=0)
+            node.key = exp_map(node.proj.unsqueeze(0)).squeeze(0)
     
     # ------------------------------------------------------------------
     # CORE: RECALL
@@ -564,6 +589,11 @@ class HyperbolicMemoryTree:
         
         # Start with root beam
         root = self._nodes[self._root_id]
+        
+        # Flush deferred ancestor updates before searching
+        if self._dirty_set:
+            self._flush_updates()
+        
         current_beam = [(0.0, self._root_id)]
         
         while current_beam and len(results) < top_k * 3:
@@ -675,15 +705,18 @@ class HyperbolicMemoryTree:
             parent.child_ids.remove(id2)
         del self._nodes[id2]
         
-        # Update ancestors
-        self._update_ancestors(id1)
+        self._mark_dirty(id1)
     
     # ------------------------------------------------------------------
     # STATE MANAGEMENT
     # ------------------------------------------------------------------
     
     def state(self) -> Dict[str, Any]:
-        """Export full tree state for serialization."""
+        """Export full tree state for serialization.
+        Flushes deferred updates first so stored state is current."""
+        if self._dirty_set:
+            self._flush_updates()
+        
         nodes_data = {}
         for nid, node in self._nodes.items():
             data = {
