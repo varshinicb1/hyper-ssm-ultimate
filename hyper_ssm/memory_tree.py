@@ -144,7 +144,7 @@ class HyperbolicMemoryTree:
         state_dim: int = 64,
         embed_dim: int = 384,
         max_nodes: int = 20000,
-        max_depth: int = 10,
+        max_depth: int = 20,
         branching_factor: int = 4,
         merge_threshold: float = 0.3,
         device: Optional[torch.device] = None,
