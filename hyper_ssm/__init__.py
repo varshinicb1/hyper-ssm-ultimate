@@ -43,8 +43,11 @@ from .hierarchical_memory import (
     check_manifold,
     project_to_hyperboloid,
 )
+from .memory_tree import (
+    HyperbolicMemoryTree,
+)
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 __all__ = [
     "HyperSSM",
@@ -76,4 +79,5 @@ __all__ = [
     "log_map",
     "check_manifold",
     "project_to_hyperboloid",
+    "HyperbolicMemoryTree",
 ]

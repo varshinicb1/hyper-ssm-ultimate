@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "icm-llm"
 dynamic = ["version"]
-description = "O(1) hyperbolic memory for any LLM — 260 bytes per session forever"
+description = "Infinite Context Memory (ICM) — O(1) flat or O(log N) tree memory for any LLM. No context limit."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
