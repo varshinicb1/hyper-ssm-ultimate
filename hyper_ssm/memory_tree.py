@@ -79,6 +79,12 @@ class MemoryNode:
     # Also on the hyperboloid
     key: Optional[torch.Tensor] = None
     
+    # Euclidean projected embedding (before exp_map).
+    # For leaves: the projected input embedding.
+    # For internal nodes: average of children's projections.
+    # Used for routing without hyperbolic averaging distortion.
+    proj: Optional[torch.Tensor] = None
+    
     # Leaf-specific
     content: Optional[str] = None
     embedding: Optional[np.ndarray] = None  # original Euclidean embedding
@@ -100,9 +106,11 @@ class MemoryNode:
         """Estimated memory used by this node."""
         total = 0
         if self.state is not None:
-            total += self.state.numel() * 4  # float32
+            total += self.state.numel() * 4
         if self.key is not None:
             total += self.key.numel() * 4
+        if self.proj is not None:
+            total += self.proj.numel() * 4
         if self.embedding is not None:
             total += self.embedding.nbytes
         if self.content:
@@ -137,7 +145,7 @@ class HyperbolicMemoryTree:
         embed_dim: int = 384,
         max_nodes: int = 20000,
         max_depth: int = 10,
-        branching_factor: int = 16,
+        branching_factor: int = 4,
         merge_threshold: float = 0.3,
         device: Optional[torch.device] = None,
     ):
@@ -172,6 +180,7 @@ class HyperbolicMemoryTree:
         )
         root.state = self._make_origin_state()
         root.key = self._make_origin_state()
+        root.proj = torch.zeros(self.state_dim, device=self.device)
         self._root_id = root.id
         self._nodes[root.id] = root
     
@@ -263,20 +272,30 @@ class HyperbolicMemoryTree:
         return path
     
     def _best_child(self, parent_id: int, query_hyp: torch.Tensor) -> Optional[int]:
-        """Find the child whose key is most similar to query."""
+        """Find the child closest to query (lowest hyperbolic_similarity)."""
         parent = self._nodes[parent_id]
         if not parent.child_ids:
             return None
         
         best_id = None
-        best_sim = -float("inf")
+        best_sim = float("inf")
         
         for cid in parent.child_ids:
             child = self._nodes[cid]
-            if child.key is None:
+            if child.is_leaf:
+                child_key = child.key
+            else:
+                child_key = child.proj
+            
+            if child_key is None:
                 continue
-            sim = hyperbolic_similarity(query_hyp, child.key).item()
-            if sim > best_sim:
+            
+            if child.is_leaf:
+                sim = hyperbolic_similarity(query_hyp, child_key.unsqueeze(0)).item()
+            else:
+                hp = exp_map(child_key.unsqueeze(0))
+                sim = hyperbolic_similarity(query_hyp, hp).item()
+            if sim < best_sim:
                 best_sim = sim
                 best_id = cid
         
@@ -302,6 +321,7 @@ class HyperbolicMemoryTree:
         )
         leaf.state = query_hyp[0].clone()
         leaf.key = query_hyp[0].clone()
+        leaf.proj = projected[0].clone()
         
         self._nodes[leaf.id] = leaf
         self._nodes[parent_id].child_ids.append(leaf.id)
@@ -323,26 +343,141 @@ class HyperbolicMemoryTree:
         query_hyp: torch.Tensor,
         content: str,
     ) -> int:
-        """Parent is full. Create a new internal node under parent and redistribute children."""
-        parent = self._nodes[parent_id]
+        """B-tree-style split: divide children into two balanced nodes at the
+        same depth, keeping the tree wide instead of deep.
         
-        # Create new internal node
-        internal = MemoryNode(
+        When a node overflows, all its children are clustered into two groups
+        by similarity. Two new internal nodes are created under the parent.
+        Each group goes to one node. The new leaf is inserted into the
+        better-matching group.
+        
+        This guarantees O(log_{b/2}(N)) depth where b = branching_factor.
+        """
+        parent = self._nodes[parent_id]
+        all_child_ids = list(parent.child_ids)
+        
+        if len(all_child_ids) < 2:
+            # Not enough children to split — just add under parent
+            return self._create_leaf(emb_t, projected, query_hyp, content, parent_id)
+        
+        # Find two seed children with lowest mutual hyperbolic_similarity
+        # (lowest = closest together on hyperboloid)
+        min_sim = float("inf")
+        seed_a = all_child_ids[0]
+        seed_b = all_child_ids[1]
+        for i in range(len(all_child_ids)):
+            for j in range(i + 1, len(all_child_ids)):
+                ci = self._nodes[all_child_ids[i]]
+                cj = self._nodes[all_child_ids[j]]
+                if ci.key is not None and cj.key is not None:
+                    sim = hyperbolic_similarity(ci.key.unsqueeze(0), cj.key.unsqueeze(0)).item()
+                    if sim < min_sim:
+                        min_sim = sim
+                        seed_a = all_child_ids[i]
+                        seed_b = all_child_ids[j]
+        
+        # Assign each child to the closer seed
+        group_a = [seed_a]
+        group_b = [seed_b]
+        for cid in all_child_ids:
+            if cid in (seed_a, seed_b):
+                continue
+            child = self._nodes[cid]
+            if child.key is not None and self._nodes[seed_a].key is not None and self._nodes[seed_b].key is not None:
+                sim_a = hyperbolic_similarity(child.key.unsqueeze(0),
+                    self._nodes[seed_a].key.unsqueeze(0)).item()
+                sim_b = hyperbolic_similarity(child.key.unsqueeze(0),
+                    self._nodes[seed_b].key.unsqueeze(0)).item()
+                # Lower hyperbolic_similarity = closer. Assign to closer seed.
+                if sim_b < sim_a:
+                    group_b.append(cid)
+                else:
+                    group_a.append(cid)
+            else:
+                group_a.append(cid)
+        
+        # Balance: ensure each group has at least branching_factor // 4
+        min_group = max(2, self.branching_factor // 4)
+        if len(group_a) < min_group and len(group_b) > min_group * 2:
+            # Move most-similar-to-a from b to a
+            if self._nodes[seed_a].key is not None:
+                group_b_sorted = sorted(group_b, key=lambda cid: (
+                    hyperbolic_similarity(self._nodes[cid].key.unsqueeze(0),
+                        self._nodes[seed_a].key.unsqueeze(0)).item()
+                    if self._nodes[cid].key is not None else -float("inf")
+                ))  # ascending = closest to seed_a first
+                while len(group_a) < min_group and group_b_sorted:
+                    group_a.append(group_b_sorted.pop(0))
+                group_b = [c for c in group_b_sorted if c in group_b] if group_b_sorted else [c for c in group_b if c not in group_a]
+        elif len(group_b) < min_group and len(group_a) > min_group * 2:
+            if self._nodes[seed_b].key is not None:
+                group_a_sorted = sorted(group_a, key=lambda cid: (
+                    hyperbolic_similarity(self._nodes[cid].key.unsqueeze(0),
+                        self._nodes[seed_b].key.unsqueeze(0)).item()
+                    if self._nodes[cid].key is not None else -float("inf")
+                ))  # ascending = closest to seed_b first
+                while len(group_b) < min_group and group_a_sorted:
+                    group_b.append(group_a_sorted.pop(0))
+                group_a = [c for c in group_a_sorted if c in group_a] if group_a_sorted else [c for c in group_a if c not in group_b]
+        
+        # Create TWO internal nodes at the same depth as parent+1
+        depth = parent.depth + 1
+        
+        node_a = MemoryNode(
             id=self._next_id(),
-            depth=parent.depth + 1,
+            depth=depth,
+            parent_id=parent_id,
+        )
+        node_b = MemoryNode(
+            id=self._next_id(),
+            depth=depth,
             parent_id=parent_id,
         )
         
-        # Move half of parent's children to internal
-        half = len(parent.child_ids) // 2
-        moved = parent.child_ids[-half:]
-        parent.child_ids = parent.child_ids[:-half]
-        
-        for cid in moved:
+        # Assign groups and set keys/states as averages
+        for cid in group_a:
             child = self._nodes[cid]
-            child.parent_id = internal.id
-            self._update_subtree_depth(cid, internal.depth + 1)
-            internal.child_ids.append(cid)
+            child.parent_id = node_a.id
+            self._update_subtree_depth(cid, depth + 1)
+            node_a.child_ids.append(cid)
+        
+        for cid in group_b:
+            child = self._nodes[cid]
+            child.parent_id = node_b.id
+            self._update_subtree_depth(cid, depth + 1)
+            node_b.child_ids.append(cid)
+        
+        # Set internal node states as group averages (in tangent space)
+        for node, group in [(node_a, group_a), (node_b, group_b)]:
+            child_states = [self._nodes[cid].state for cid in group if self._nodes[cid].state is not None]
+            child_projs = [self._nodes[cid].proj for cid in group if self._nodes[cid].proj is not None]
+            
+            # Hyperbolic state: average in tangent space (partial info preserved)
+            if child_states:
+                logs = [log_map(s.unsqueeze(0)).squeeze(0) for s in child_states]
+                avg_log = torch.stack(logs).mean(dim=0)
+                node.state = exp_map(avg_log.unsqueeze(0)).squeeze(0)
+            
+            # Euclidean key: average projected embeddings (direction preserved!)
+            if child_projs:
+                projs = torch.stack(child_projs)
+                node.proj = projs.mean(dim=0)
+                node.key = exp_map(node.proj.unsqueeze(0)).squeeze(0)
+        
+        # Replace parent's children with these two internal nodes
+        parent.child_ids = [node_a.id, node_b.id]
+        self._nodes[node_a.id] = node_a
+        self._nodes[node_b.id] = node_b
+        
+        # Insert new leaf under better-matching group
+        if self._nodes[seed_a].key is not None and self._nodes[seed_b].key is not None:
+            sim_a = hyperbolic_similarity(query_hyp, self._nodes[seed_a].key.unsqueeze(0)).item()
+            sim_b = hyperbolic_similarity(query_hyp, self._nodes[seed_b].key.unsqueeze(0)).item()
+            target_parent = node_a.id if sim_a >= sim_b else node_b.id
+        else:
+            target_parent = node_a.id
+        
+        return self._create_leaf(emb_t, projected, query_hyp, content, target_parent)
         
         # Set internal state as average of moved children
         if internal.child_ids:
@@ -368,28 +503,28 @@ class HyperbolicMemoryTree:
     
     def _update_ancestors(self, node_id: int):
         """Propagate the new leaf's information up through all ancestors.
-        Each internal node merges its children's states into its own state and key."""
+        Each internal node merges its children's projections into its own."""
         current_id = self._nodes[node_id].parent_id
         while current_id is not None:
             node = self._nodes[current_id]
             children_states = []
-            children_keys = []
+            children_projs = []
             for cid in node.child_ids:
                 child = self._nodes[cid]
                 if child.state is not None:
                     children_states.append(child.state)
-                if child.key is not None:
-                    children_keys.append(child.key)
+                if child.proj is not None:
+                    children_projs.append(child.proj)
             
             if children_states:
                 logs = [log_map(s.unsqueeze(0)).squeeze(0) for s in children_states]
                 avg_log = torch.stack(logs).mean(dim=0)
                 node.state = exp_map(avg_log.unsqueeze(0)).squeeze(0)
             
-            if children_keys:
-                logs = [log_map(k.unsqueeze(0)).squeeze(0) for k in children_keys]
-                avg_log = torch.stack(logs).mean(dim=0)
-                node.key = exp_map(avg_log.unsqueeze(0)).squeeze(0)
+            if children_projs:
+                projs = torch.stack(children_projs)
+                node.proj = projs.mean(dim=0)
+                node.key = exp_map(node.proj.unsqueeze(0)).squeeze(0)
             
             current_id = node.parent_id
     
@@ -421,55 +556,52 @@ class HyperbolicMemoryTree:
         projected = emb_t @ self._input_proj.T
         query_hyp = exp_map(projected)
         
-        # Beam search: priority queue of (similarity, node_id)
+        # Per-depth beam search: visits closest children first.
+        # hyperbolic_similarity returns -lorentz_inner where HIGHER = FARTHER
+        # (min 1.0 for identical points).  We sort ASCENDING to get closest.
         results = []
         visited = set()
         
-        # Start with root
+        # Start with root beam
         root = self._nodes[self._root_id]
-        candidates = [(0.0, self._root_id)]
+        current_beam = [(0.0, self._root_id)]
         
-        while candidates and len(results) < top_k * 3:
-            candidates.sort(key=lambda x: -x[0])
-            _, current_id = candidates.pop(0)
-            
-            if current_id in visited:
-                continue
-            visited.add(current_id)
-            
-            node = self._nodes[current_id]
-            node.access_count += 1
-            node.last_accessed = __import__("time").time()
-            
-            if node.is_leaf:
-                sim = hyperbolic_similarity(query_hyp, node.key).item() if node.key is not None else 0.0
-                results.append({
-                    "content": node.content or "",
-                    "similarity": sim,
-                    "depth": node.depth,
-                    "node_id": node.id,
-                    "embedding": node.embedding,
-                })
-                continue
-            
-            # Add children ranked by similarity
-            child_sims = []
-            for cid in node.child_ids:
-                child = self._nodes[cid]
-                if child.key is None:
+        while current_beam and len(results) < top_k * 3:
+            # Collect all candidates at next depth from current beam
+            next_candidates = []
+            for _, nid in current_beam:
+                if nid in visited:
                     continue
-                sim = hyperbolic_similarity(query_hyp, child.key).item()
-                child_sims.append((sim, cid))
+                visited.add(nid)
+                node = self._nodes[nid]
+                node.access_count += 1
+                node.last_accessed = __import__("time").time()
+                
+                if node.is_leaf:
+                    sim = hyperbolic_similarity(query_hyp, node.key).item() if node.key is not None else 0.0
+                    results.append({
+                        "content": node.content or "",
+                        "similarity": sim,
+                        "depth": node.depth,
+                        "node_id": node.id,
+                        "embedding": node.embedding,
+                    })
+                    continue
+                
+                # Add this node's children to next level candidates
+                for cid in node.child_ids:
+                    child = self._nodes[cid]
+                    if child.key is None:
+                        continue
+                    sim = hyperbolic_similarity(query_hyp, child.key).item()
+                    next_candidates.append((sim, cid))
             
-            child_sims.sort(key=lambda x: -x[0])
-            
-            # Beam: keep top children
-            for sim, cid in child_sims[:self.branching_factor]:
-                if cid not in visited:
-                    candidates.append((sim, cid))
+            # Prune to top branching_factor closest children for next depth
+            next_candidates.sort(key=lambda x: x[0])
+            current_beam = next_candidates[:self.branching_factor]
         
-        # Sort by similarity, return top_k
-        results.sort(key=lambda x: -x["similarity"])
+        # Sort by similarity ascending (closest first), return top_k
+        results.sort(key=lambda x: x["similarity"])
         return results[:top_k]
     
     def recall_all_scales(
@@ -497,9 +629,9 @@ class HyperbolicMemoryTree:
     
     def _prune_one(self):
         """Find and merge the two most similar sibling leaves."""
-        # Find sibling leaves with highest similarity
+        # Find sibling leaves with highest similarity (lowest hyperbolic_similarity)
         best_pair = None
-        best_sim = -float("inf")
+        best_sim = float("inf")
         
         for nid, node in self._nodes.items():
             if node.is_leaf and node.parent_id is not None:
@@ -510,7 +642,7 @@ class HyperbolicMemoryTree:
                     sibling = self._nodes[sid]
                     if sibling.is_leaf and sibling.key is not None and node.key is not None:
                         sim = hyperbolic_similarity(node.key, sibling.key).item()
-                        if sim > best_sim:
+                        if sim < best_sim:
                             best_sim = sim
                             best_pair = (nid, sid)
         
@@ -570,6 +702,8 @@ class HyperbolicMemoryTree:
                 data["key"] = _to_numpy(node.key).tolist()
             if node.embedding is not None:
                 data["embedding"] = node.embedding.tolist()
+            if node.proj is not None:
+                data["proj"] = _to_numpy(node.proj).tolist()
             nodes_data[str(nid)] = data
         
         return {
@@ -622,6 +756,8 @@ class HyperbolicMemoryTree:
                 node.key = torch.tensor(data["key"], dtype=torch.float32)
             if data.get("embedding"):
                 node.embedding = np.array(data["embedding"], dtype=np.float32)
+            if data.get("proj"):
+                node.proj = torch.tensor(data["proj"], dtype=torch.float32)
             self._nodes[nid] = node
         
         return self

@@ -4,6 +4,7 @@ Serves a single shared IcmLlm instance across all sessions via REST API.
 """
 
 import sys, os, time, pickle, logging, threading, asyncio, json
+import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from contextlib import asynccontextmanager
 from typing import Optional, Dict, Any
