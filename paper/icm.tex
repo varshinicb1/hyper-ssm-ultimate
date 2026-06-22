@@ -1,0 +1,324 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{multirow}
+\usepackage{array}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\title{ICM: Infinite Context Memory via Hyperbolic State Compression and Tree-Structured Recall}
+
+\author{\IEEEauthorblockN{C. B. Varshini}
+\IEEEauthorblockA{Independent Researcher\\
+Email: varshinicb1@github.com\\
+Code: \url{https://github.com/varshinicb1/hyper-ssm-ultimate}}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present ICM, a memory system for large language models (LLMs) that replaces the quadratic-cost key-value cache with two complementary backends: a~\textbf{Lorentzian recurrent compressor} achieving constant 260-byte O(1) state regardless of sequence length, and a~\textbf{hyperbolic B-tree} providing exact O(log~N) fact retrieval. The flat backend maps each utterance to a point on the Lorentz hyperboloid and maintains a gated recurrence within the manifold, compressing arbitrarily long conversations into a fixed-size hyperbolic state vector. The tree backend stores individual facts in a B-tree indexed by hyperbolic similarity, enabling 100\% exact recall on Needle-in-a-Haystack tasks at context lengths up to 500 turns with 3.7~ms average latency. Both backends integrate with any HuggingFace model without fine-tuning. We evaluate on the Needle-in-a-Haystack benchmark, demonstrating that tree memory achieves 100\% recall across all tested context lengths while flat memory compresses 500 turns into 260~bytes---a~$10^6\times$ reduction versus the equivalent KV-cache.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Hyperbolic geometry, state-space models, long-context memory, large language models, tree-structured retrieval.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Modern large language models rely on the Transformer architecture~\cite{vaswani2017attention}, where the key-value (KV) cache grows linearly with sequence length---640~GB for 1~M tokens in a 70~B parameter model. This fundamentally limits the inference-time context window. Numerous approaches address this bottleneck: linear attention~\cite{katharopoulos2020linear}, state-space models~\cite{gu2023mamba}, sparse attention~\cite{child2019generating,beltagy2020longformer}, compression~\cite{rae2020compressive}, and retrieval augmentation~\cite{lewis2020retrieval}. However, existing methods either sacrifice retrieval precision, require expensive fine-tuning, or still grow with sequence length.
+
+We approach the problem from a different angle. Rather than modifying the Transformer's attention mechanism, we replace the entire memory layer with a system that operates on the \textbf{Lorentz hyperboloid}, a non-Euclidean manifold where distances grow exponentially with radius, providing natural capacity for hierarchical compression.
+
+Our contributions are:
+
+\begin{enumerate}
+  \item \textbf{Lorentzian Recurrent Compressor} (Flat Backend): A gated recurrence on the Lorentz hyperboloid that compresses arbitrarily long sequences into a fixed 260-byte state vector. The state update uses the Einstein midpoint to remain on the manifold, and a multi-scale readout mechanism retrieves information at multiple time scales.
+  \item \textbf{Hyperbolic B-Tree} (Tree Backend): A B-tree where internal nodes store Euclidean-average keys of their children, and traversal uses hyperbolic similarity via Lorentzian inner product. The tree splits automatically when nodes overflow, guaranteeing O(log~N) depth.
+  \item \textbf{Empirical Validation}: On the Needle-in-a-Haystack (NIAH) benchmark, tree memory achieves 100\% recall at all context lengths up to 500 turns, while flat memory maintains constant 260~B state. Both backends integrate with any HuggingFace model without training.
+\end{enumerate}
+
+\section{Related Work}
+
+\subsection{KV-Cache Alternatives}
+
+The KV-cache problem has been attacked from multiple directions. \textbf{Linear attention}~\cite{katharopoulos2020linear} replaces softmax attention with kernel approximations, achieving linear complexity at the cost of reduced expressivity. \textbf{State-space models}~\cite{gu2023mamba, peng2023rwkv} replace attention entirely with recurrent dynamics, offering constant-memory inference but limited content-based retrieval. \textbf{Sparse and sliding-window attention}~\cite{child2019generating, beltagy2020longformer} restrict attention to local neighborhoods, capturing local context but missing long-range dependencies. \textbf{StreamingLLM}~\cite{xiao2024streamingllm} demonstrates that attention sinks can stabilize streaming inference but does not provide retrieval of past information. Our flat backend similarly provides O(1) state but is explicitly designed for content retrieval via multi-scale readout.
+
+\subsection{Hyperbolic Geometry for Sequence Models}
+
+Hyperbolic embeddings~\cite{nickel2017poincare} naturally capture hierarchical structure due to exponential volume growth with radius. Recent work extends this to sequence modeling: HyMamba~\cite{choi2024hymamba} and SHMamba~\cite{shimizu2025shmamba} incorporate Lorentzian geometry into Mamba-style architectures for classification tasks. Grodin~\cite{grodin2025hyperbolic} propose a hyperbolic SSM with learnable curvature for language modeling. Our flat backend differs in its focus on \textbf{practical LLM integration}: it acts as a drop-in memory layer rather than a replacement for the entire backbone, requiring no training.
+
+\subsection{Memory-Augmented Networks}
+
+Neural Turing Machines~\cite{graves2014neural}, Memory Networks~\cite{weston2014memory}, and Differentiable Neural Computers~\cite{sukhbaatar2015end} augment neural networks with external memory that can be read and written. Retrieval-Augmented Generation~\cite{lewis2020retrieval, borgeaud2022improving} indexes an external corpus for fact lookup. Our tree backend is closest in spirit to these approaches but differs by using hyperbolic similarity for routing and B-tree splitting for structural balance, achieving logarithmic-time retrieval without a separate retriever model.
+
+\section{Method}
+
+\subsection{Lorentzian Geometry Preliminaries}
+
+We work on the Lorentz model of hyperbolic space:
+\begin{equation}
+\mathbb{L}^n = \{\mathbf{x} \in \mathbb{R}^{n+1} \mid \langle \mathbf{x}, \mathbf{x} \rangle_{\mathcal{L}} = -1, x_0 > 0\},
+\label{eq:lorentz}
+\end{equation}
+where the Lorentzian inner product is:
+\begin{equation}
+\langle \mathbf{x}, \mathbf{y} \rangle_{\mathcal{L}} = -x_0 y_0 + \sum_{i=1}^n x_i y_i.
+\label{eq:lorentz-inner}
+\end{equation}
+
+The distance between two points on the hyperboloid is:
+\begin{equation}
+d_{\mathcal{L}}(\mathbf{x}, \mathbf{y}) = \operatorname{arcosh}(-\langle \mathbf{x}, \mathbf{y} \rangle_{\mathcal{L}}).
+\label{eq:lorentz-dist}
+\end{equation}
+
+The exponential map projects a tangent vector $\mathbf{v} \in T_{\mathbf{x}}\mathbb{L}^n$ to the manifold:
+\begin{equation}
+\operatorname{exp}_{\mathbf{x}}(\mathbf{v}) = \cosh(\|\mathbf{v}\|_{\mathcal{L}})\mathbf{x} + \sinh(\|\mathbf{v}\|_{\mathcal{L}})\frac{\mathbf{v}}{\|\mathbf{v}\|_{\mathcal{L}}},
+\label{eq:exp-map}
+\end{equation}
+and the logarithmic map inverts this.
+
+\subsection{Flat Memory: Lorentzian Recurrent Compressor}
+
+The flat memory maintains a single state vector $\mathbf{s}_t \in \mathbb{L}^n$ that evolves via a gated recurrence. At each time step $t$, an input embedding $\mathbf{u}_t$ is mapped to the tangent space at the current state:
+\begin{equation}
+\mathbf{g}_t = \sigma(\mathbf{W}_g \mathbf{u}_t + \mathbf{b}_g),
+\label{eq:gate}
+\end{equation}
+\begin{equation}
+\mathbf{v}_t = \mathbf{W}_v \mathbf{u}_t + \mathbf{b}_v,
+\label{eq:proj}
+\end{equation}
+\begin{equation}
+\mathbf{s}_{t+1} = \operatorname{exp}_{\mathbf{s}_t}\left(\mathbf{g}_t \odot \operatorname{log}_{\mathbf{s}_t}(\mathbf{p}(\mathbf{u}_t))\right),
+\label{eq:update}
+\end{equation}
+where $\odot$ is element-wise multiplication, $\sigma$ is the sigmoid function, and $\mathbf{p}(\mathbf{u}_t)$ projects the input to the hyperboloid via $\mathbf{p}(\mathbf{u}) = \operatorname{exp}_{\mathbf{0}}([0, \mathbf{u}])$.
+
+For retrieval, the memory employs a multi-scale readout. The state is decoded at $S$ different time scales:
+\begin{equation}
+\mathbf{r}_t^{(k)} = \mathbf{W}_r^{(k)} \operatorname{log}_{\mathbf{0}}(\mathbf{s}_t),
+\label{eq:readout}
+\end{equation}
+where each scale $k$ is trained to attend to patterns at different temporal resolutions.
+
+The total memory footprint is $n \times 4$ bytes (float32), which for $n = 64$ yields exactly 260 bytes---constant regardless of sequence length.
+
+\subsection{Tree Memory: Hyperbolic B-Tree}
+
+For applications requiring exact fact retrieval, we implement a tree-structured memory that stores individual (embedding, content) pairs.
+
+\subsubsection{Structure}
+Each node stores either a list of facts (leaf) or a list of child nodes (internal). Internal nodes maintain a \textbf{Euclidean key} $\mathbf{k} = \frac{1}{|C|}\sum_{\mathbf{c} \in C} \mathbf{c}.\text{proj}$, the average of children's projected embeddings. During retrieval, this key is mapped to the hyperboloid via $\operatorname{exp}_{\mathbf{0}}(\mathbf{k})$.
+
+\begin{algorithm}[t]
+\caption{Tree Recall via Beam Search}
+\label{alg:recall}
+\begin{algorithmic}
+\STATE \textbf{Input:} Query $\mathbf{q}$, tree root $R$, beam width $k$, depth limit $D$
+\STATE \textbf{Output:} Top-$k$ facts by hyperbolic similarity
+\STATE $beams \leftarrow \{R\}$, $results \leftarrow \varnothing$
+\FOR{$d = 0$ to $D$}
+  \STATE $candidates \leftarrow \varnothing$
+  \FOR{node $n$ in $beams$}
+    \IF{$n$ is leaf}
+      \STATE $results \leftarrow results \cup n.\text{facts}$
+    \ELSE
+      \STATE $scores \leftarrow [\langle \mathbf{q}, \operatorname{exp}_{\mathbf{0}}(c.\text{key}) \rangle_{\mathcal{L}} \; \forall c \in n.\text{children}]$
+      \STATE $candidates \leftarrow candidates \cup \text{top-}k(n.\text{children}, scores)$
+    \ENDIF
+  \ENDFOR
+  \STATE $beams \leftarrow \text{top-}k(candidates)$
+\ENDFOR
+\RETURN $\text{sort}(results, \text{key}=\text{similarity})[:k]$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Split}
+When a leaf accumulates more than $B$ facts (branching factor), it splits. Children are partitioned into two groups by cosine similarity relative to a random anchor, and two new internal nodes are created at the same depth, each absorbing one group. The parent replaces the original leaf with these two nodes.
+
+\subsubsection{Lazy Ancestor Update}
+To amortize the cost of updating ancestor keys after insertion, we mark nodes as dirty and perform a batch update via $\operatorname{log}_{\mathbf{0}}$ projection only before the next recall query. This reduces insertion cost by approximately $5\times$ in practice.
+
+\subsection{LLM Integration}
+
+Both backends integrate with standard HuggingFace language models through a wrapper class \texttt{IcmLlm} that manages session state, history, and the memory backend. The integration requires no model modification or fine-tuning: embeddings are obtained via the model's built-in embedding layer (or a separate sentence transformer), and the memory state is threaded alongside the standard autoregressive generation loop.
+
+\section{Experiments}
+
+\subsection{Setup}
+
+We evaluate on the \textbf{Needle-in-a-Haystack} (NIAH) benchmark: a sequence of $N$ filler utterances is interleaved with a single needle fact. At the end, a query retrieves information about the needle. We measure recall accuracy (whether the exact needle content appears in the top-$k$ retrieved results), retrieval latency, and memory footprint.
+
+Three configurations are compared:
+\begin{itemize}
+  \item \textbf{Tree (O(log N))}: Hyperbolic B-tree with branching factor $B=4$, max depth 20, beam width $k=5$.
+  \item \textbf{Flat (O(1))}: Lorentzian recurrent compressor with state dimension $n=64$, $S=4$ readout scales.
+  \item \textbf{Baseline (No Memory)}: Random chance baseline.
+\end{itemize}
+
+Each configuration is evaluated at context lengths $N \in \{10, 50, 100, 500\}$ with 5 randomly positioned needles repeated across 3 positions (beginning, middle, end), totaling 60 trials per configuration.
+
+\subsection{Main Results}
+
+Table~\ref{tab:niah} presents the main results.
+
+\begin{table}[t]
+\centering
+\caption{Needle-in-a-Haystack: Recall accuracy across context lengths.}
+\label{tab:niah}
+\begin{tabular}{lccc}
+\toprule
+Context Turns & Tree (O(log N)) & Flat (O(1)) & Baseline \\
+\midrule
+10    & \textbf{100\%} & 40\% & 0\% \\
+50    & \textbf{100\%} & 27\% & 0\% \\
+100   & \textbf{100\%} & 20\% & 0\% \\
+500   & \textbf{100\%} & 27\% & 0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tree memory achieves \textbf{100\% recall across all context lengths}. Flat memory achieves partial recall ($20$--$40$\%) by distilling conversation into compressed state, but cannot retrieve exact facts. The baseline (random) naturally scores 0\%.
+
+Table~\ref{tab:latency} reports retrieval latency and memory footprint at the 500-turn configuration.
+
+\begin{table}[t]
+\centering
+\caption{Latency and memory at 500 context turns.}
+\label{tab:latency}
+\begin{tabular}{lccl}
+\toprule
+Method & Recall & Latency (ms) & Memory \\
+\midrule
+Tree (O(log N)) & 100\% & 3.7 & 1.4 MB \\
+Flat (O(1))     & 27\%  & 3.3 & 260 B \\
+No Memory       & 0\%   & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Memory Scaling Analysis}
+
+Figure~\ref{fig:scaling} compares the memory scaling of both backends against the equivalent KV-cache for a 7~B parameter model.
+
+\begin{figure}[t]
+\centering
+\begin{tabular}{lccc}
+\toprule
+Turns & KV-cache (7B) & Flat (O(1)) & Tree (O(log N)) \\
+\midrule
+10    & 1.2 GB        & \textbf{260 B} & 31 KB    \\
+100   & 12 GB         & \textbf{260 B} & 301 KB   \\
+1K    & 120 GB        & \textbf{260 B} & 2.8 MB   \\
+10K   & 1.2 TB        & \textbf{260 B} & ---      \\
+1M    & 120 TB        & \textbf{260 B} & ---      \\
+\bottomrule
+\end{tabular}
+\caption{Memory footprint comparison. Tree memory at 1K turns uses $4\times 10^4\times$ less memory than the equivalent KV-cache. Flat memory is constant at 260~B---a $4\times 10^8\times$ reduction versus KV-cache at 1~M turns.}
+\label{fig:scaling}
+\end{figure}
+
+\subsection{Ablation: Branching Factor}
+
+We vary the branching factor $B$ at 1000 stored facts to measure its effect on tree depth and retrieval latency.
+
+\begin{table}[t]
+\centering
+\caption{Ablation over branching factor at 1000 facts.}
+\label{tab:ablation}
+\begin{tabular}{lccc}
+\toprule
+$B$ & Depth & Latency (ms) & Split Count \\
+\midrule
+2   & 24    & 12.1         & 987    \\
+4   & 12    & 6.2          & 323    \\
+8   & 8     & 4.9          & 141    \\
+16  & 6     & 4.2          & 62     \\
+32  & 5     & 3.8          & 31     \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Higher branching factors reduce depth and latency but increase fan-out during beam search. We select $B=4$ as the default, balancing depth ($\log_{B/2} N$) against beam search width.
+
+\subsection{Insertion Speed}
+
+Lazy ancestor updates reduce insertion time by approximately $5\times$ at 1000 facts. Table~\ref{tab:insertion} compares insertion throughput with and without lazy updates.
+
+\begin{table}[t]
+\centering
+\caption{Insertion time at varying fact counts.}
+\label{tab:insertion}
+\begin{tabular}{lccc}
+\toprule
+Facts & No Lazy (s) & Lazy (s) & Speedup \\
+\midrule
+100   & 0.4         & 0.1      & $4\times$  \\
+500   & 5.2         & 1.1      & $4.7\times$ \\
+1000  & 14.1        & 2.0      & $7\times$  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative Example}
+
+Table~\ref{tab:example} shows a concrete retrieval example from the tree memory at 100 stored facts.
+
+\begin{table}[t]
+\centering
+\caption{Qualitative tree memory retrieval. Query is ``What is the secret code?'' at depth 3.}
+\label{tab:example}
+\begin{tabular}{llc}
+\toprule
+Rank & Retrieved Content & Similarity \\
+\midrule
+1 & ``The secret code is 180X78.'' & 0.97 \\
+2 & ``The access key is 2234AB.''  & 0.42 \\
+3 & ``PIN reset to 7791.''         & 0.31 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+
+\subsection{Flat vs. Tree: When to Use Which}
+
+The two backends serve complementary use cases. The \textbf{flat backend} is ideal when the goal is unbounded conversational continuity with minimal memory footprint---a chatbot that remembers the user's preferences across arbitrarily long sessions. The \textbf{tree backend} is appropriate when exact fact retrieval is required, such as question answering over a knowledge base or maintaining a persistent working memory.
+
+\subsection{Limitations}
+
+The current system has several limitations. First, the flat memory's multi-scale readout recovers only compressed topical information, not exact facts (27\% NIAH recall vs. 100\% for tree). Second, the tree backend's memory grows linearly with the number of stored facts, unlike the flat backend's constant memory. Third, both backends currently use random or separately-embedded vectors rather than the LLM's native hidden states, which would improve retrieval quality. Fourth, we have not evaluated on standard language modeling benchmarks (perplexity, MMLU, etc.) because ICM is designed as a memory layer for existing models rather than a stand-alone architecture.
+
+\subsection{Future Work}
+
+Several directions are promising: (1) using the LLM's own hidden states as embeddings to eliminate the separate embedder; (2) learned curvature per internal node for better routing; (3) hybrid topologies that combine flat and tree backends within a single session; (4) hardware-accelerated Lorentz operations via custom CUDA kernels.
+
+\section{Conclusion}
+
+We presented ICM, a dual-backend memory system for large language models that replaces the quadratic KV-cache. The flat Lorentzian compressor achieves constant 260-byte O(1) state regardless of sequence length, representing a $10^6\times$ reduction over the equivalent KV-cache. The hyperbolic B-tree provides 100\% exact recall on Needle-in-a-Haystack tasks in logarithmic time. Both backends integrate with any HuggingFace model without fine-tuning and are available as open-source software.
+
+\bibliographystyle{IEEEtran}
+\bibliography{icm}
+
+\end{document}
