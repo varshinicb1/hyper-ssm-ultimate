@@ -1,0 +1,104 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="50%" stop-color="#161b22"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#58a6ff"/>
+      <stop offset="50%" stop-color="#3fb950"/>
+      <stop offset="100%" stop-color="#f0883e"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="70%" cy="20%" r="50%">
+      <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="30%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#3fb950" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#3fb950" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <line x1="60" y1="0" x2="60" y2="60" stroke="#30363d" stroke-opacity="0.12" stroke-width="0.5"/>
+      <line x1="0" y1="60" x2="60" y2="60" stroke="#30363d" stroke-opacity="0.12" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+  <rect width="1280" height="640" fill="url(#orb1)"/>
+  <rect width="1280" height="640" fill="url(#orb2)"/>
+  <rect width="1280" height="4" fill="url(#bar)"/>
+
+  <!-- Badge -->
+  <rect x="60" y="80" width="135" height="28" rx="14" fill="#58a6ff" fill-opacity="0.1" stroke="#58a6ff" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="76" y="99" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#58a6ff">v0.2.0 — Tree Memory</text>
+
+  <!-- Main tagline -->
+  <text x="60" y="200" font-family="system-ui, sans-serif" font-size="72" font-weight="800" fill="#58a6ff" letter-spacing="-1.5">260 B O(1)</text>
+  <text x="60" y="270" font-family="system-ui, sans-serif" font-size="34" font-weight="700" fill="#8b949e">or O(log N) exact recall</text>
+  <text x="60" y="340" font-family="system-ui, sans-serif" font-size="42" font-weight="700" fill="#c9d1d9">Infinite Context Memory</text>
+  <text x="60" y="375" font-family="system-ui, sans-serif" font-size="17" fill="#8b949e">Replace the KV-cache. Zero training. Any HuggingFace model.</text>
+
+  <!-- Divider -->
+  <rect x="60" y="405" width="50" height="3" rx="1" fill="#58a6ff"/>
+
+  <!-- Right card -->
+  <g transform="translate(700, 80)">
+    <rect x="0" y="0" width="500" height="460" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+
+    <g transform="translate(24, 24)">
+      <rect x="-2" y="-2" width="24" height="24" rx="4" fill="#3fb950" fill-opacity="0.15"/>
+      <text x="2" y="15" font-family="system-ui" font-size="13" fill="#3fb950">&#10003;</text>
+      <text x="32" y="15" font-family="system-ui" font-size="15" font-weight="500" fill="#c9d1d9">Two memory backends</text>
+      <text x="32" y="30" font-family="system-ui" font-size="12" fill="#8b949e">Flat O(1) 260B state + Tree O(log N) exact recall</text>
+    </g>
+    <g transform="translate(24, 96)">
+      <rect x="-2" y="-2" width="24" height="24" rx="4" fill="#a371f7" fill-opacity="0.15"/>
+      <text x="2" y="15" font-family="system-ui" font-size="13" fill="#a371f7">&#9744;</text>
+      <text x="32" y="15" font-family="system-ui" font-size="15" font-weight="500" fill="#c9d1d9">100% NIAH recall</text>
+      <text x="32" y="30" font-family="system-ui" font-size="12" fill="#8b949e">60/60 needles at 500 turns, ~3.7ms avg</text>
+    </g>
+    <g transform="translate(24, 168)">
+      <rect x="-2" y="-2" width="24" height="24" rx="4" fill="#d29922" fill-opacity="0.15"/>
+      <text x="2" y="15" font-family="system-ui" font-size="13" fill="#d29922">&#9733;</text>
+      <text x="32" y="15" font-family="system-ui" font-size="15" font-weight="500" fill="#c9d1d9">81 passing tests</text>
+      <text x="32" y="30" font-family="system-ui" font-size="12" fill="#8b949e">CI-verified, zero warnings</text>
+    </g>
+    <g transform="translate(24, 240)">
+      <rect x="-2" y="-2" width="24" height="24" rx="4" fill="#3fb950" fill-opacity="0.15"/>
+      <text x="2" y="15" font-family="system-ui" font-size="13" fill="#3fb950">&#9660;</text>
+      <text x="32" y="15" font-family="system-ui" font-size="15" font-weight="500" fill="#c9d1d9">pip install icm-llm</text>
+      <text x="32" y="30" font-family="system-ui" font-size="12" fill="#8b949e">CLI chat, web server, Docker, Colab</text>
+    </g>
+    <g transform="translate(24, 312)">
+      <rect x="-2" y="-2" width="24" height="24" rx="4" fill="#58a6ff" fill-opacity="0.15"/>
+      <text x="2" y="15" font-family="system-ui" font-size="13" fill="#58a6ff">&#9881;</text>
+      <text x="32" y="15" font-family="system-ui" font-size="15" font-weight="500" fill="#c9d1d9">Quantization + auth</text>
+      <text x="32" y="30" font-family="system-ui" font-size="12" fill="#8b949e">4-bit NF4, 8-bit, API key auth, rate limiting</text>
+    </g>
+    <g transform="translate(24, 384)">
+      <rect x="-2" y="-2" width="24" height="24" rx="4" fill="#f0883e" fill-opacity="0.15"/>
+      <text x="2" y="15" font-family="system-ui" font-size="13" fill="#f0883e">&#128640;</text>
+      <text x="32" y="15" font-family="system-ui" font-size="15" font-weight="500" fill="#c9d1d9">Any HuggingFace model</text>
+      <text x="32" y="30" font-family="system-ui" font-size="12" fill="#8b949e">GPT-2, TinyLlama, Qwen, Phi-3, Gemma</text>
+    </g>
+  </g>
+
+  <!-- CTA -->
+  <rect x="60" y="520" width="240" height="46" rx="8" fill="#238636"/>
+  <text x="80" y="549" font-family="system-ui" font-size="16" font-weight="600" fill="white">pip install icm-llm &amp;&amp; icm-demo</text>
+
+  <!-- URL -->
+  <text x="60" y="600" font-family="monospace" font-size="16" fill="#d29922">github.com/varshinicb1/hyper-ssm-ultimate</text>
+
+  <!-- Stats -->
+  <g transform="translate(960, 533)">
+    <text x="0" y="-2" font-family="system-ui" font-size="26" font-weight="700" fill="#3fb950" text-anchor="middle">81</text>
+    <text x="0" y="18" font-family="system-ui" font-size="11" fill="#8b949e" text-anchor="middle" letter-spacing="0.5">TESTS</text>
+    <text x="75" y="-2" font-family="system-ui" font-size="26" font-weight="700" fill="#58a6ff" text-anchor="middle">2</text>
+    <text x="75" y="18" font-family="system-ui" font-size="11" fill="#8b949e" text-anchor="middle" letter-spacing="0.5">BACKENDS</text>
+    <text x="165" y="-2" font-family="system-ui" font-size="26" font-weight="700" fill="#f0883e" text-anchor="middle">260B</text>
+    <text x="165" y="18" font-family="system-ui" font-size="11" fill="#8b949e" text-anchor="middle" letter-spacing="0.5">STATE O(1)</text>
+  </g>
+</svg>

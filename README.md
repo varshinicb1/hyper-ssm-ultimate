@@ -4,11 +4,12 @@
   <p>
     <a href="https://github.com/varshinicb1/hyper-ssm-ultimate"><img src="https://img.shields.io/github/stars/varshinicb1/hyper-ssm-ultimate?style=social" alt="Stars" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue" alt="License" /></a>
-    <a href="#"><img src="https://img.shields.io/badge/Tests-81_passing-brightgreen" alt="Tests" /></a>
+    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate/actions/workflows/ci.yml"><img src="https://github.com/varshinicb1/hyper-ssm-ultimate/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
     <a href="https://pypi.org/project/icm-llm/"><img src="https://img.shields.io/pypi/v/icm-llm?color=brightgreen" alt="PyPI" /></a>
     <a href="https://pypi.org/project/icm-llm/"><img src="https://img.shields.io/pypi/dm/icm-llm?label=downloads" alt="Downloads" /></a>
     <a href="#"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python" /></a>
-    <a href="icm_demo.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Colab" /></a>
+    <a href="https://colab.research.google.com/github/varshinicb1/hyper-ssm-ultimate/blob/main/icm_demo.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" /></a>
+    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate"><img src="https://img.shields.io/badge/tests-81_passing-brightgreen" alt="Tests" /></a>
   </p>
 </div>
 
@@ -55,7 +56,7 @@ More ways:
 | **CLI Chat** | `icm-chat --memory-backend tree` |
 | **Web Server** | `icm-server --memory-backend tree` |
 | **Docker** | `docker compose up -d && open http://localhost:8000` |
-| **Colab** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](icm_demo.ipynb) |
+| **Colab** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/varshinicb1/hyper-ssm-ultimate/blob/main/icm_demo.ipynb) |
 | **Python** | `from hyper_ssm.memory_tree import HyperbolicMemoryTree` |
 
 ```python
@@ -238,3 +239,28 @@ pytest tests/ -v
 ## 📜 License
 
 Apache 2.0
+
+---
+
+## ⭐ Spread the Word
+
+If ICM saves you GPU memory or unlocks a new use case, help others find it:
+
+<p align="center">
+  <a href="https://twitter.com/intent/tweet?text=Infinite%20Context%20Memory%20for%20LLMs%20—%20O(1)%20flat%20or%20O(log%20N)%20tree%20memory.%20Replace%20the%20KV-cache%20with%20260%20bytes.%20%F0%9F%A7%A0&url=https://github.com/varshinicb1/hyper-ssm-ultimate&hashtags=llm,deeplearning,opensource">
+    <img src="https://img.shields.io/badge/Tweet-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" alt="Tweet" />
+  </a>
+  <a href="https://www.producthunt.com/">
+    <img src="https://img.shields.io/badge/Product%20Hunt-DA552F?style=for-the-badge&logo=producthunt&logoColor=white" alt="Product Hunt" />
+  </a>
+  <a href="https://news.ycombinator.com/submitlink?u=https://github.com/varshinicb1/hyper-ssm-ultimate&t=Infinite%20Context%20Memory%20(ICM)%20—%20O(1)%20flat%20or%20O(log%20N)%20tree%20memory%20for%20LLMs">
+    <img src="https://img.shields.io/badge/Hacker%20News-FF6600?style=for-the-badge&logo=ycombinator&logoColor=white" alt="Hacker News" />
+  </a>
+  <a href="https://www.reddit.com/submit?url=https://github.com/varshinicb1/hyper-ssm-ultimate&title=Infinite%20Context%20Memory%20(ICM)%20—%20Replace%20the%20KV-cache%20with%20260%20bytes%20O(1)%20or%20O(log%20N)%20tree%20recall">
+    <img src="https://img.shields.io/badge/Reddit-FF4500?style=for-the-badge&logo=reddit&logoColor=white" alt="Reddit" />
+  </a>
+</p>
+
+<p align="center">
+  ⭐ <strong>Star the repo</strong> on GitHub — it helps others discover the project.
+</p>

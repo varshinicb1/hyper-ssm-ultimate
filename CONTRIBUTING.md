@@ -1,50 +1,42 @@
-# Contributing to Infinite Context Memory
+# Contributing
 
-Thanks for your interest! Here's how to contribute effectively.
+Thanks for your interest in ICM! Here's how to contribute:
 
-## Getting Started
+## Development Setup
 
 ```bash
-git clone https://github.com/varshinicb1/hyper-ssm-ultimate.git
+git clone https://github.com/varshinicb1/hyper-ssm-ultimate
 cd hyper-ssm-ultimate
-pip install -r requirements.txt
-pip install fastapi uvicorn sentence-transformers pytest pytest-asyncio
-python -m pytest tests/ -v
+pip install -e ".[dev]"
 ```
 
-## Development Workflow
+## Running Tests
 
-1. **Fork** the repo
-2. **Create a branch**: `git checkout -b feature/my-feature`
-3. **Write tests** for your changes
-4. **Run the full suite**: `python -m pytest tests/ -v`
-5. **Push** and open a Pull Request
+```bash
+pytest tests/ -v
+```
+
+All 81 tests must pass before submitting a PR.
 
 ## Code Style
 
+- Python 3.10+ with type annotations
 - Follow existing patterns in the codebase
-- No comments unless absolutely necessary
-- Type hints on all public functions
-- 88 character line limit (black-compatible)
+- No unnecessary comments
+- No emojis in code (unless asked)
 
-## Testing
+## Pull Requests
 
-All features must have tests. We use pytest with markers:
+1. Fork the repo
+2. Create a feature branch
+3. Write tests for new functionality
+4. Ensure all tests pass
+5. Submit a PR with a clear description
 
-```bash
-pytest tests/ -v                    # all tests
-pytest tests/ -m unit              # unit tests only
-pytest tests/ -m integration       # integration tests only
-```
+## Adding a New Memory Backend
 
-## Pull Request Checklist
-
-- [ ] Tests pass (`pytest tests/ -v`)
-- [ ] No new warnings
-- [ ] Tests added for new features
-- [ ] Type hints added
-- [ ] README updated if API changed
-
-## Questions?
-
-Open a [Discussion](https://github.com/varshinicb1/hyper-ssm-ultimate/discussions) or [Issue](https://github.com/varshinicb1/hyper-ssm-ultimate/issues/new).
+1. Create a class similar to `HyperbolicMemoryTree` or `InfiniteContextMemory`
+2. Implement `remember(embedding, content)` and `recall(embedding, top_k)`
+3. Add tests in `tests/test_icm.py`
+4. Integrate into `IcmLlm` in `hyper_ssm/llm_integration.py`
+5. Add `--memory-backend` support in CLI and server

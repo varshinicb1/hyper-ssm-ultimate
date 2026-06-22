@@ -1,19 +1,18 @@
 ---
-name: Feature Request
-about: Suggest an idea for Infinite Context Memory
-title: "[FEATURE] "
+name: Feature request
+about: Suggest an idea for ICM
+title: ""
 labels: enhancement
 assignees: ""
 ---
 
 **Is your feature request related to a problem?**
-A clear and concise description of what the problem is.
+A clear description of the problem.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Describe the solution**
+What you'd like to see added.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Describe alternatives**
+Other approaches you've considered.
 
 **Additional context**
-Add any other context or screenshots about the feature request here.

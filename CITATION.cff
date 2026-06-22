@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "ICM: Infinite Context Memory for Large Language Models"
+message: "If you use this software, please cite it."
+type: software
+authors:
+  - given-names: "Varshini"
+    family-names: "CB"
+    email: "varshinicb1@github.com"
+    affiliation: "Independent"
+identifiers:
+  - type: url
+    value: "https://github.com/varshinicb1/hyper-ssm-ultimate"
+  - type: doi
+    value: "10.5281/zenodo.XXXXX"
+repository-code: "https://github.com/varshinicb1/hyper-ssm-ultimate"
+abstract: "A hyperbolic memory system for LLMs with O(1) flat state compression and O(log N) tree-structured exact recall, replacing the KV-cache."
+license: Apache-2.0
+version: 0.2.0
+date-released: 2026-06-22
