@@ -347,6 +347,7 @@ async def get_health():
     mode = "gpu" if _HAS_CUDA else "cpu-memory-fallback"
     return {"status": "ok", "model": cfg.model_name, "embedding": cfg.embedder_name,
             "llm_available": LLM_BACKEND_AVAILABLE, "mode": mode,
+            "backend": cfg.memory_backend,
             "sessions_active": active, "max_sessions": cfg.max_sessions,
             "session_ttl": cfg.session_ttl, "quantize_bits": cfg.quantize_bits,
             "sqlite_path": cfg.sqlite_path, "auth_enabled": cfg.auth_enabled}

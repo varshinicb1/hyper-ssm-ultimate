@@ -2,302 +2,68 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ICM Admin Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ICM Admin</title>
 <style>
-:root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d29922; }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
-h1 { font-size: 24px; margin-bottom: 20px; }
-h2 { font-size: 16px; margin-bottom: 12px; color: var(--accent); }
-h3 { font-size: 14px; margin-bottom: 8px; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-.stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-card .value { font-size: 20px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
-.stat-card .value.green { color: var(--green); }
-.stat-card .value.red { color: var(--red); }
-.panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-tr:hover td { background: rgba(88,166,255,0.04); }
-a { color: var(--accent); text-decoration: none; cursor: pointer; }
-a:hover { text-decoration: underline; }
-button { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
-button:hover { opacity: 0.85; }
-button.danger { background: var(--red); }
-input, select { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; }
-input:focus, select:focus { outline: none; border-color: var(--accent); }
-.search-bar { display: flex; gap: 8px; margin-bottom: 12px; }
-.search-bar input { flex: 1; }
-.history-entry { padding: 10px 12px; border-left: 3px solid var(--border); margin: 8px 0; font-size: 13px; }
-.history-entry.user { border-left-color: var(--accent); }
-.history-entry.assistant { border-left-color: var(--green); }
-.history-entry .role { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-.history-entry .content { white-space: pre-wrap; word-break: break-word; }
-.empty { color: var(--muted); text-align: center; padding: 30px; font-size: 14px; }
-.loading { color: var(--muted); text-align: center; padding: 20px; }
-.toast { position: fixed; bottom: 20px; right: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; display: none; z-index: 999; max-width: 400px; }
-.toast.show { display: block; }
-.toast.success { border-color: var(--green); }
-.toast.error { border-color: var(--red); }
-.switch-form { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
-.switch-form .field { display: flex; flex-direction: column; gap: 4px; }
-.switch-form .field label { font-size: 11px; color: var(--muted); }
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --text:#e6edf3;--text-secondary:#8b949e;--text-muted:#6e7681;
+  --accent:#58a6ff;--green:#3fb950;--red:#f85149;--amber:#d29922;
+  --radius:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);padding:24px;line-height:1.5}
+h1{font-size:20px;font-weight:600;margin-bottom:4px}
+.sub{color:var(--text-secondary);font-size:13px;margin-bottom:24px}
+h2{font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.card .l{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.card .v{font-size:20px;font-weight:600;margin-top:2px}
+.card .v.accent{color:var(--accent)}.card .v.green{color:var(--green)}.card .v.red{color:var(--red)}
+.note{font-size:11px;color:var(--text-muted);margin-top:2px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:6px 8px;color:var(--text-muted);font-size:11px;font-weight:600;border-bottom:1px solid var(--border)}
+td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text-secondary)}
+tr:hover td{background:var(--surface)}
+td.mono{font-family:var(--mono);font-size:12px}
+.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:500}
+.tag.green{background:rgba(63,185,80,.15);color:var(--green)}
+.tag.accent{background:rgba(88,166,255,.12);color:var(--accent)}
 </style>
 </head>
 <body>
-<h1>ICM Admin Dashboard</h1>
-
-<div class="stats-grid" id="stats"></div>
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-<div>
-  <div class="panel" id="model-panel">
-    <h2>Switch Model</h2>
-    <div class="switch-form">
-      <div class="field">
-        <label>Model Name</label>
-        <input type="text" id="model-name" value="gpt2" style="width:240px">
-      </div>
-      <div class="field">
-        <label>Quantization</label>
-        <select id="model-quantize">
-          <option value="">None (full precision)</option>
-          <option value="4">4-bit NF4</option>
-          <option value="8">8-bit</option>
-        </select>
-      </div>
-      <button onclick="switchModel()">Switch Model</button>
-    </div>
-    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Quick Presets</div>
-      <div class="switch-form">
-        <div class="field">
-          <select id="model-preset" style="width:300px" onchange="applyPreset()">
-            <option value="">Select a preset...</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel" id="auth-panel">
-    <h2>API Keys</h2>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input type="text" id="key-description" placeholder="Key description (optional)" style="flex:1">
-      <button onclick="createApiKey()">Generate Key</button>
-    </div>
-    <div id="key-list"><div class="loading">No keys</div></div>
-  </div>
-
-  <div class="panel">
-    <h2>Sessions</h2>
-    <div class="search-bar">
-      <input type="text" id="session-search" placeholder="Search sessions..." oninput="renderSessions()">
-      <button onclick="refreshSessions()">Refresh</button>
-    </div>
-    <div id="session-list"><div class="loading">Loading sessions...</div></div>
-  </div>
-</div>
-
-<div>
-  <div class="panel" id="session-detail-panel" style="display:none">
-    <h2>Session Detail <a onclick="closeDetail()" style="font-size:12px;font-weight:400">[close]</a></h2>
-    <div id="session-detail-info" style="font-size:13px;color:var(--muted);margin-bottom:12px"></div>
-    <div id="session-export-btns" style="display:none;margin-bottom:12px;gap:8px">
-      <button onclick="exportSession('json')" style="background:var(--green)">Export JSON</button>
-      <button onclick="exportSession('markdown')" style="background:var(--green)">Export Markdown</button>
-    </div>
-    <div id="session-history"><div class="loading">Loading history...</div></div>
-  </div>
-</div>
-</div>
-
-<div class="toast" id="toast"></div>
-
+<h1>ICM Admin</h1>
+<div class="sub">Infinite Context Memory — Server Dashboard</div>
+<div class="stats" id="stats"></div>
+<div class="panel"><h2>Sessions</h2><table><thead><tr><th>ID</th><th>Turns</th><th>Memory</th><th>Status</th></tr></thead><tbody id="st"></tbody></table></div>
+<div class="panel"><h2>Presets</h2><table><thead><tr><th>Name</th><th>Model ID</th><th>Quant</th><th>Note</th></tr></thead><tbody id="pt"></tbody></table></div>
 <script>
-const API = '';
-
-async function api(path, opts) {
-  const res = await fetch(API + path, opts);
-  if (!res.ok) { const e = await res.text(); throw new Error(e); }
-  return res.json();
-}
-
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + type;
-  setTimeout(() => { t.className = 'toast'; }, 3000);
-}
-
-async function loadStats() {
-  try {
-    const s = await api('/admin/stats');
-    const grid = document.getElementById('stats');
-    grid.innerHTML = renderStats(s);
-  } catch (e) { showToast('Failed to load stats: ' + e.message, 'error'); }
-}
-
-function renderStats(s) {
-  const cards = [
-    { label: 'Model', value: s.loaded_model || s.model_name },
-    { label: 'Quantization', value: s.quantize_bits ? s.quantize_bits + '-bit' : 'None', cls: s.quantize_bits ? 'green' : '' },
-    { label: 'Device', value: s.cuda ? 'CUDA' : 'CPU', cls: s.cuda ? 'green' : '' },
-    { label: 'VRAM Allocated', value: s.vram_allocated_mb ? s.vram_allocated_mb + ' MB' : 'N/A' },
-    { label: 'In-Memory Sessions', value: s.in_memory_sessions },
-    { label: 'SQLite Sessions', value: s.sqlite_session_count || 0 },
-    { label: 'Total Utterances', value: s.total_conversation_utterances || 0 },
-    { label: 'State Dim', value: s.state_dim },
-    { label: 'Scales', value: s.num_scales },
-    { label: 'Max Tokens', value: s.max_new_tokens },
-    { label: 'SQLite Path', value: s.sqlite_path || 'None', cls: s.sqlite_path ? '' : 'red' },
-    { label: 'LLM Available', value: s.llm_available ? 'Yes' : 'No', cls: s.llm_available ? 'green' : 'red' },
-  ];
-  return cards.map(c => `<div class="stat-card"><div class="label">${c.label}</div><div class="value ${c.cls || ''}">${c.value}</div></div>`).join('');
-}
-
-async function loadSessions() {
-  try {
-    const data = await api('/sessions');
-    window._sessions = data.sessions || [];
-    renderSessions();
-  } catch (e) { showToast('Failed to load sessions: ' + e.message, 'error'); }
-}
-
-function renderSessions() {
-  const q = (document.getElementById('session-search').value || '').toLowerCase();
-  const filtered = window._sessions.filter(s => s.id.toLowerCase().includes(q));
-  const el = document.getElementById('session-list');
-  if (filtered.length === 0) { el.innerHTML = '<div class="empty">No sessions found</div>'; return; }
-  el.innerHTML = `<table><thead><tr><th>ID</th><th>Turns</th><th>Created</th><th>Active</th><th></th></tr></thead><tbody>${filtered.map(s => `<tr><td><a onclick="showDetail('${s.id}')">${s.id}</a></td><td>${s.turns}</td><td>${fmtTime(s.created_at)}</td><td>${fmtTime(s.last_active)}</td><td><button class="danger" onclick="deleteSession('${s.id}')">Delete</button></td></tr>`).join('')}</tbody></table>`;
-}
-
-function fmtTime(ts) {
-  const d = new Date(ts * 1000);
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
-}
-
-async function deleteSession(sid) {
-  if (!confirm('Delete session "' + sid + '"?')) return;
-  try {
-    await api('/sessions/' + encodeURIComponent(sid), { method: 'DELETE' });
-    showToast('Deleted session: ' + sid, 'success');
-    loadSessions(); loadStats();
-  } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
-}
-
-async function showDetail(sid) {
-  const panel = document.getElementById('session-detail-panel');
-  panel.style.display = 'block';
-  document.getElementById('session-detail-info').textContent = 'Loading session ' + sid + '...';
-  document.getElementById('session-history').innerHTML = '<div class="loading">Loading history...</div>';
-  document.getElementById('session-export-btns').style.display = 'none';
-  window._currentDetailSid = sid;
-  try {
-    const data = await api('/admin/sessions/' + encodeURIComponent(sid) + '/history');
-    const info = document.getElementById('session-detail-info');
-    info.textContent = `Session: ${sid} | Utterances: ${data.utterance_count} | Memory: ${data.memory_bytes}B`;
-    if (data.history.length > 0) {
-      document.getElementById('session-export-btns').style.display = 'flex';
-    }
-    const el = document.getElementById('session-history');
-    if (data.history.length === 0) {
-      el.innerHTML = '<div class="empty">No conversation history</div>';
-    } else {
-      el.innerHTML = data.history.map(h => `<div class="history-entry ${h.role}"><div class="role">${h.role}</div><div class="content">${escHtml(h.content)}</div></div>`).join('');
-    }
-  } catch (e) {
-    document.getElementById('session-history').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
-  }
-}
-
-function exportSession(format) {
-  const sid = window._currentDetailSid;
-  if (!sid) return;
-  const a = document.createElement('a');
-  a.href = API + '/sessions/' + encodeURIComponent(sid) + '/export/' + format;
-  a.download = sid + '.' + (format === 'json' ? 'json' : 'md');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-function closeDetail() {
-  document.getElementById('session-detail-panel').style.display = 'none';
-}
-
-async function switchModel() {
-  const name = document.getElementById('model-name').value.trim();
-  const q = document.getElementById('model-quantize').value;
-  if (!name) { showToast('Enter a model name', 'error'); return; }
-  const btn = document.querySelector('#model-panel button');
-  btn.disabled = true; btn.textContent = 'Loading...';
-  try {
-    const body = { model_name: name };
-    if (q) body.quantize_bits = parseInt(q);
-    const res = await api('/admin/model', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    showToast(res.message, 'success');
-    loadStats();
-  } catch (e) {
-    showToast('Switch failed: ' + e.message, 'error');
-  }
-  btn.disabled = false; btn.textContent = 'Switch Model';
-}
-
-function applyPreset() {
-  const sel = document.getElementById('model-preset');
-  const presetId = sel.value;
-  if (!presetId) return;
-  const presets = window._presets || [];
-  const preset = presets.find(p => p.id === presetId);
-  if (!preset) return;
-  document.getElementById('model-name').value = preset.id;
-  document.getElementById('model-quantize').value = preset.recommended_quant !== null ? String(preset.recommended_quant) : '';
-  showToast('Loaded preset: ' + preset.name, 'success');
-}
-
-async function loadPresets() {
-  try {
-    const data = await api('/admin/presets');
-    window._presets = data.presets || [];
-    const sel = document.getElementById('model-preset');
-    sel.innerHTML = '<option value="">Select a preset...</option>' +
-      data.presets.map(p =>
-        `<option value="${p.id}">${p.name} ${p.recommended_quant ? '[' + p.recommended_quant + '-bit]' : ''} — ${p.note}</option>`
-      ).join('');
-  } catch (e) { /* presets not critical */ }
-}
-
-async function refreshSessions() { loadSessions(); loadStats(); }
-
-async function loadKeys() {
-  try {
-    const data = await api('/admin/keys');
-    const el = document.getElementById('key-list');
-    if (!data.enabled) { el.innerHTML = '<div class="empty">Auth not enabled (set --auth-enabled)</div>'; return; }
-    if (data.keys.length === 0) { el.innerHTML = '<div class="empty">No API keys</div>'; return; }
-    el.innerHTML = `<table><thead><tr><th>Key</th><th>Description</th><th>Created</th><th>Status</th><th></th></tr></thead><tbody>${data.keys.map(k => `<tr><td style="font-family:monospace;font-size:12px">${k.key_prefix}</td><td>${k.description || '-'}</td><td>${fmtTime(k.created_at)}</td><td>${k.is_active ? '<span style="color:var(--green)">Active</span>' : '<span style="color:var(--red)">Revoked</span>'}</td></tr>`).join('')}</tbody></table>`;
-  } catch (e) { /* auth may not be enabled */ }
-}
-
-async function createApiKey() {
-  const desc = document.getElementById('key-description').value;
-  try {
-    const data = await api('/admin/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ description: desc }) });
-    showToast('API Key: ' + data.key, 'success');
-    loadKeys();
-  } catch (e) { showToast('Failed: ' + e.message, 'error'); }
-}
-
-loadStats();
-loadKeys();
-loadSessions();
-loadPresets();
-setInterval(loadStats, 5000);
+const A='';
+function f(b){if(!b)return'0 B';if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(2)+' MB'}
+(async()=>{
+  try{
+    const[s,ss,pp]=await Promise.all([
+      fetch(A+'/admin/stats').then(r=>r.json()).catch(()=>({})),
+      fetch(A+'/sessions').then(r=>r.json()).catch(()=>({sessions:[]})),
+      fetch(A+'/admin/presets').then(r=>r.json()).catch(()=>({presets:[]})),
+    ]);
+    document.getElementById('stats').innerHTML=`
+      <div class="card"><div class="l">Model</div><div class="v accent" style="font-size:14px">${s.loaded_model||'—'}</div></div>
+      <div class="card"><div class="l">Device</div><div class="v" style="font-size:13px;color:var(--text-secondary)">${s.device||'—'}</div></div>
+      <div class="card"><div class="l">Backend</div><div class="v" style="font-size:14px">${s.backend||'flat'}</div></div>
+      <div class="card"><div class="l">Sessions</div><div class="v accent">${s.in_memory_sessions||0}</div></div>
+      <div class="card"><div class="l">State Dim</div><div class="v">${s.state_dim||64}</div></div>
+      <div class="card"><div class="l">Quant</div><div class="v ${s.quantize_bits?'green':'amber'}">${s.quantize_bits?s.quantize_bits+'-bit':'none'}</div></div>`;
+    const sa=(ss.sessions||[]);
+    document.getElementById('st').innerHTML=sa.length?sa.map(s=>`<tr><td class="mono">${s.id.slice(0,24)}…</td><td>${s.turns||0}</td><td>${f(s.memory_bytes)}</td><td><span class="tag green">active</span></td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No sessions</td></tr>';
+    const pa=(pp.presets||[]);
+    document.getElementById('pt').innerHTML=pa.map(p=>`<tr><td><strong>${p.name}</strong></td><td class="mono">${p.id}</td><td>${p.recommended_quant?p.recommended_quant+'-bit':'—'}</td><td>${p.note||''}</td></tr>`).join('');
+  }catch(e){document.getElementById('stats').innerHTML='<div style="color:var(--text-muted)">Error loading stats</div>'}
+})();
 </script>
 </body>
 </html>
