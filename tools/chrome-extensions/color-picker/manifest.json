@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Color Picker Pro",
+  "version": "1.0.0",
+  "description": "Pick colors from any webpage, save your palette, copy hex/rgb/hsl instantly.",
+  "homepage_url": "https://github.com/varshinicb1/hyper-ssm-ultimate/tree/main/tools/chrome-extensions/color-picker",
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }],
+  "minimum_chrome_version": "102"
+}

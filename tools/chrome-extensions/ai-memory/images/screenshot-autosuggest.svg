@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg4)"/>
+
+  <!-- Chrome frame -->
+  <rect x="40" y="30" width="720" height="540" rx="8" fill="#2d2d44" stroke="#3d3d5c" stroke-width="1"/>
+  <rect x="40" y="30" width="720" height="40" rx="8" fill="#252538"/>
+  <rect x="40" y="50" width="720" height="20" fill="#252538"/>
+  <circle cx="65" cy="50" r="6" fill="#ff5f57"/>
+  <circle cx="85" cy="50" r="6" fill="#febc2e"/>
+  <circle cx="105" cy="50" r="6" fill="#28c840"/>
+
+  <!-- Chat interface mockup -->
+  <rect x="60" y="80" width="680" height="470" rx="6" fill="#212135"/>
+
+  <!-- Chat header -->
+  <text x="400" y="110" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" fill="#ccc" font-weight="bold">ChatGPT</text>
+  <line x1="60" y1="120" x2="740" y2="120" stroke="#3d3d5c"/>
+
+  <!-- AI message -->
+  <rect x="120" y="140" width="400" height="80" rx="8" fill="#34344a"/>
+  <text x="140" y="165" font-family="system-ui, sans-serif" font-size="13" fill="#ccc">I can see you've been working on</text>
+  <text x="140" y="185" font-family="system-ui, sans-serif" font-size="13" fill="#ccc">hyperbolic memory trees. Last time we</text>
+  <text x="140" y="205" font-family="system-ui, sans-serif" font-size="13" fill="#ccc">discussed tree merging strategies.</text>
+
+  <!-- User typing area -->
+  <rect x="80" y="250" width="600" height="60" rx="8" fill="#2d2d44" stroke="#667eea" stroke-width="1"/>
+  <text x="100" y="285" font-family="system-ui, sans-serif" font-size="14" fill="#aaa">Can you show me the code for</text>
+
+  <!-- Auto-suggest dropdown -->
+  <rect x="100" y="315" width="480" height="90" rx="8" fill="#1a1a2e" stroke="#667eea" stroke-width="1.5"/>
+
+  <!-- Suggestion header -->
+  <text x="115" y="335" font-family="system-ui, sans-serif" font-size="11" fill="#667eea" font-weight="bold">📌 From AI Memory</text>
+
+  <!-- Suggestion 1 -->
+  <rect x="110" y="345" width="440" height="25" rx="4" fill="#24243e"/>
+  <text x="125" y="362" font-family="system-ui, sans-serif" font-size="11" fill="#ddd">"the HyperbolicMemoryTree class that saves conversations"</text>
+
+  <!-- Suggestion 2 -->
+  <rect x="110" y="372" width="440" height="25" rx="4" fill="#667eea" opacity="0.15"/>
+  <text x="125" y="389" font-family="system-ui, sans-serif" font-size="11" fill="#667eea">→ Tree merging implementation snippet</text>
+
+  <!-- Suggestion badge -->
+  <rect x="120" y="405" width="150" height="18" rx="9" fill="#667eea" opacity="0.2"/>
+  <text x="195" y="418" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#667eea">⬆⬇ Navigate · ⏎ Insert</text>
+
+  <!-- Send button -->
+  <rect x="690" y="255" width="40" height="50" rx="6" fill="#667eea"/>
+  <text x="710" y="286" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" fill="white">➤</text>
+
+  <!-- Memory indicator bar -->
+  <rect x="60" y="460" width="680" height="30" rx="4" fill="#1e1e32"/>
+  <text x="80" y="480" font-family="system-ui, sans-serif" font-size="11" fill="#888">🧠 Memory: 47 conversations saved · </text>
+  <text x="380" y="480" font-family="system-ui, sans-serif" font-size="11" fill="#28c840">Auto-save ✓</text>
+
+  <text x="400" y="565" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#888">Relevant memories appear as you type</text>
+</svg>

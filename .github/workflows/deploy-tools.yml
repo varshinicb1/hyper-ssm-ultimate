@@ -1,0 +1,90 @@
+# ICM Tool Factory — Auto-deploy web tools + publish extensions
+# Triggers when anything in tools/ changes on main branch
+
+name: Deploy Tools
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/**'
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  deploy-web-tools:
+    name: Deploy Web Tools to GitHub Pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'web-tool') || contains(github.event.head_commit.message, 'deploy')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Optional: Auto-publish Chrome extensions when a new version is pushed
+  publish-chrome:
+    name: Publish Chrome Extension
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'publish-chrome')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd publish
+          npm install chrome-webstore-upload
+
+      - name: Publish Chrome extension
+        env:
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          CHROME_ITEM_ID: ${{ secrets.CHROME_ITEM_ID }}
+        run: |
+          # Determine which extension changed
+          CHANGED=$(git diff --name-only HEAD~1 -- tools/chrome-extensions/ | head -1)
+          if [ -n "$CHANGED" ]; then
+            EXT_DIR=$(echo "$CHANGED" | cut -d/ -f1-3)
+            echo "Publishing: $EXT_DIR"
+            node publish/scripts/chrome-upload.js "$EXT_DIR"
+          fi
+
+  # Optional: Create Gumroad products
+  publish-gumroad:
+    name: Create Gumroad Product
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'publish-gumroad')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Publish to Gumroad
+        env:
+          GUMROAD_ACCESS_TOKEN: ${{ secrets.GUMROAD_ACCESS_TOKEN }}
+        run: |
+          node publish/scripts/gumroad.js "${{ github.event.inputs.tool_name }}" "${{ github.event.inputs.price }}"

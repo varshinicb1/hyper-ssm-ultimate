@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>JSON Formatter & Validator — Free Online Tool</title>
+<style>
+:root{--bg:#0d1117;--surface:#151b23;--border:#30363d;--text:#e6edf3;--t2:#8b949e;--t3:#6e7681;--blue:#4a7cff;--green:#22c55e;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SFMono-Regular',Consolas,monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;line-height:1.6}
+header{position:sticky;top:0;z-index:10;background:rgba(13,17,23,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 16px;height:48px;display:flex;align-items:center;gap:12px}
+header .logo{font-size:14px;font-weight:700}
+header .logo span{color:var(--blue)}
+header nav{margin-left:auto;display:flex;gap:12px}
+header nav a{font-size:12px;color:var(--t2);text-decoration:none}
+header nav a:hover{color:var(--text)}
+.container{max-width:1000px;margin:0 auto;padding:24px 16px;flex:1;width:100%}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+h1 span{color:var(--blue)}
+.desc{color:var(--t2);font-size:13px;margin-bottom:16px}
+.editor-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-height:400px}
+@media(max-width:640px){.editor-wrap{grid-template-columns:1fr}}
+.pane{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.pane-header{padding:8px 12px;font-size:11px;font-weight:600;color:var(--t2);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.pane-header .count{font-weight:400;font-size:10px;color:var(--t3)}
+textarea{flex:1;background:var(--bg);border:none;color:var(--text);font-family:var(--mono);font-size:12px;padding:12px;resize:none;outline:none;min-height:300px;tab-size:2}
+textarea::placeholder{color:var(--t3)}
+#output{flex:1;background:var(--bg);padding:12px;font-family:var(--mono);font-size:12px;overflow:auto;white-space:pre-wrap;word-break:break-word;min-height:300px;line-height:1.5}
+#output.error{color:#ef4444}
+#output.ok{color:var(--green)}
+.toolbar{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.toolbar button{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s}
+.toolbar button:hover{border-color:var(--blue);color:var(--blue)}
+.toolbar button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.toolbar button.primary:hover{opacity:.85}
+.toolbar button.green{background:var(--green);border-color:var(--green);color:#fff}
+.buy{text-align:center;margin-top:20px;padding:16px;border-top:1px solid var(--border);font-size:12px;color:var(--t2)}
+.buy a{color:var(--blue);text-decoration:none;font-weight:600}
+footer{border-top:1px solid var(--border);padding:16px;text-align:center;font-size:11px;color:var(--t3)}
+footer a{color:var(--t2);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">JSON <span>Tool</span></div>
+  <nav>
+    <a href="#" onclick="document.getElementById('file-input').click()">Open File</a>
+    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate" target="_blank">GitHub</a>
+    <a href="index.html">More Tools</a>
+  </nav>
+  <input id="file-input" type="file" accept=".json" style="display:none" onchange="loadFile(event)">
+</header>
+<div class="container">
+  <h1>JSON <span>Formatter & Validator</span></h1>
+  <p class="desc">Paste your JSON below. Format, validate, minify — all in your browser. No data sent anywhere.</p>
+  <div class="editor-wrap">
+    <div class="pane">
+      <div class="pane-header">Input <span class="count" id="input-count"></span></div>
+      <textarea id="input" placeholder='{"name": "ICM", "version": 1}' spellcheck="false"></textarea>
+    </div>
+    <div class="pane">
+      <div class="pane-header">Output <span class="count" id="output-status"></span></div>
+      <div id="output">Valid JSON will appear here →</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="primary" onclick="format()">Format</button>
+    <button onclick="minify()">Minify</button>
+    <button onclick="validate()">Validate</button>
+    <button onclick="copyOutput()">Copy</button>
+    <button onclick="clearAll()">Clear</button>
+    <button onclick="loadSample()">Sample</button>
+    <button class="green" onclick="downloadJSON()">Download</button>
+  </div>
+  <div class="buy">
+    ⭐ Like this tool? <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">Star on GitHub</a> ·
+    <a href="https://www.buymeacoffee.com/varshinicb1">Buy Me a Coffee</a> ·
+    <a href="https://github.com/sponsors/varshinicb1">Sponsor</a>
+  </div>
+</div>
+<footer>
+  <a href="index.html">All Tools</a> · Free · Client-side only · No data leaves your device
+</footer>
+<script>
+const $input = document.getElementById('input');
+const $output = document.getElementById('output');
+const $count = document.getElementById('input-count');
+const $status = document.getElementById('output-status');
+
+$input.addEventListener('input', updateCount);
+$input.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') format() });
+
+function updateCount() {
+  const t = $input.value.trim();
+  $count.textContent = t ? `${t.split('\n').length} lines, ${t.length} chars` : '';
+}
+
+function format() {
+  const t = $input.value.trim(); if (!t) return;
+  try { const p = JSON.parse(t); $output.textContent = JSON.stringify(p, null, 2); $output.className = 'ok'; $status.textContent = '✓ Valid'; $status.style.color = '#22c55e' }
+  catch(e) { $output.textContent = '✗ ' + e.message; $output.className = 'error'; $status.textContent = '✗ Invalid'; $status.style.color = '#ef4444' }
+}
+
+function minify() {
+  const t = $input.value.trim(); if (!t) return;
+  try { const p = JSON.parse(t); $output.textContent = JSON.stringify(p); $output.className = 'ok'; $status.textContent = '✓ Minified'}
+  catch(e) { $output.textContent = '✗ ' + e.message; $output.className = 'error' }
+}
+
+function validate() {
+  const t = $input.value.trim(); if (!t) return;
+  try { JSON.parse(t); $output.textContent = '✓ Valid JSON'; $output.className = 'ok'; $status.textContent = '✓ Valid' }
+  catch(e) { $output.textContent = '✗ ' + e.message; $output.className = 'error'; $status.textContent = '✗ Invalid' }
+}
+
+function copyOutput() { navigator.clipboard.writeText($output.textContent).then(() => { $output.textContent += ' (copied!)'; setTimeout(validate, 800) }) }
+function clearAll() { $input.value = ''; $output.textContent = 'Valid JSON will appear here →'; $output.className = ''; $count.textContent = ''; $status.textContent = '' }
+function loadSample() { $input.value = '{"name":"ICM","version":"0.2.0","description":"Infinite Context Memory","features":["flat memory","tree memory","100% recall"],"pricing":{"free":true,"cloud":"₹1,249/mo","api":"₹2,419/mo"},"languages":["Python","JavaScript","TypeScript"]}'; updateCount(); format() }
+function downloadJSON() { const t = $output.textContent; if (!t || t.startsWith('✗') || t.startsWith('Valid')) return; const b = new Blob([t], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'formatted.json'; a.click(); URL.revokeObjectURL(a.href) }
+function loadFile(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { $input.value = r.result; updateCount(); format() }; r.readAsText(f) }
+</script>
+</body>
+</html>

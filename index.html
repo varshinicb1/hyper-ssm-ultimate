@@ -1,292 +1,357 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ICM — Infinite Context Memory for LLMs</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ICM — AI That Remembers Everything</title>
 <style>
-:root{
-  --bg:#0a0a0f;--surface:#12121a;--border:#1e1e2e;--border-light:#2a2a3e;
-  --text:#e8e8f0;--text-secondary:#8888a0;--text-muted:#55556a;
-  --blue:#4a7cff;--blue-subtle:rgba(74,124,255,0.1);--blue-glow:rgba(74,124,255,0.2);
-  --green:#22c55e;--amber:#eab308;
-  --radius:12px;--radius-sm:8px;
-  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;
-  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
-}
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#1e1e2e;--text:#e8e8f0;--text2:#8888a0;--text3:#55556a;--blue:#4a7cff;--green:#22c55e;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SFMono-Regular',Consolas,monospace}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.6}
 a{color:var(--blue);text-decoration:none}
-/* Nav */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:24px}
-nav .logo{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
-nav .logo span{color:var(--blue)}
-nav .nav-right{margin-left:auto;display:flex;align-items:center;gap:16px}
-nav .nav-right a{font-size:13px;color:var(--text-secondary);transition:color .15s}
-nav .nav-right a:hover{color:var(--text)}
-nav .nav-right .btn{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:500;border:1px solid var(--border-light);color:var(--text);transition:all .15s;background:var(--surface)}
-nav .nav-right .btn:hover{border-color:var(--blue);color:var(--blue)}
-nav .nav-right .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
-nav .nav-right .btn.primary:hover{opacity:.9}
 
-/* Hero */
-#hero{min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:120px 24px 80px;text-align:center;position:relative;overflow:hidden}
-#hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 50% 40%,var(--blue-glow) 0%,transparent 60%);pointer-events:none}
-#hero .tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;background:var(--blue-subtle);color:var(--blue);border:1px solid rgba(74,124,255,.2);margin-bottom:20px}
-#hero h1{font-size:clamp(36px,6vw,64px);font-weight:800;line-height:1.1;margin-bottom:16px;letter-spacing:-1px}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:24px}
+nav .logo{font-size:16px;font-weight:700;display:flex;align-items:center;gap:6px}
+nav .logo .badge{font-size:10px;background:var(--blue);color:#fff;padding:1px 7px;border-radius:10px;font-weight:600}
+nav .nav-r{margin-left:auto;display:flex;gap:16px;align-items:center}
+nav .nav-r a{font-size:13px;color:var(--text2);transition:color .15s}
+nav .nav-r a:hover{color:var(--text)}
+nav .nav-r .btn{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:500;border:1px solid var(--border);color:var(--text);transition:all .15s;background:var(--surface)}
+nav .nav-r .btn.prim{background:var(--blue);border-color:var(--blue);color:#fff}
+nav .nav-r .btn.prim:hover{opacity:.9}
+
+#hero{min-height:85vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:120px 24px 60px;text-align:center;position:relative}
+#hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 50% 40%,rgba(74,124,255,.12) 0%,transparent 60%);pointer-events:none}
+#hero h1{font-size:clamp(32px,5.5vw,60px);font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-1px}
 #hero h1 span{background:linear-gradient(135deg,var(--blue),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-#hero p{font-size:clamp(16px,2vw,20px);color:var(--text-secondary);max-width:600px;margin-bottom:32px;line-height:1.6}
+#hero p{font-size:clamp(15px,1.8vw,19px);color:var(--text2);max-width:550px;margin-bottom:32px}
 #hero .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 #hero .actions .btn{padding:12px 28px;border-radius:10px;font-size:15px;font-weight:600;transition:all .2s;cursor:pointer;font-family:var(--font)}
-#hero .actions .btn.primary{background:var(--blue);color:#fff;border:none}
-#hero .actions .btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px var(--blue-glow)}
-#hero .actions .btn.secondary{background:var(--surface);color:var(--text);border:1px solid var(--border-light)}
-#hero .actions .btn.secondary:hover{border-color:var(--blue);color:var(--blue)}
-#hero .stats{display:flex;gap:40px;margin-top:48px;flex-wrap:wrap;justify-content:center}
-#hero .stats .stat{text-align:center}
-#hero .stats .stat .num{font-size:28px;font-weight:800;color:var(--text);font-family:var(--mono)}
-#hero .stats .stat .lbl{font-size:12px;color:var(--text-muted);margin-top:2px}
+#hero .actions .btn.prim{background:var(--blue);color:#fff;border:none}
+#hero .actions .btn.prim:hover{box-shadow:0 4px 20px rgba(74,124,255,.3)}
+#hero .actions .btn.sec{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+#hero .actions .btn.sec:hover{border-color:var(--blue);color:var(--blue)}
 
-/* Sections */
-.section{padding:80px 24px;max-width:1100px;margin:0 auto}
-.section h2{font-size:28px;font-weight:700;text-align:center;margin-bottom:8px}
-.section .subtitle{text-align:center;color:var(--text-secondary);font-size:15px;margin-bottom:48px;max-width:500px;margin-left:auto;margin-right:auto}
+.proof{display:flex;gap:32px;margin-top:48px;flex-wrap:wrap;justify-content:center}
+.proof .p{text-align:center}
+.proof .p .n{font-size:26px;font-weight:800;color:var(--text);font-family:var(--mono)}
+.proof .p .l{font-size:12px;color:var(--text3);margin-top:2px}
 
-/* How it works */
-.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.how-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:border-color .2s}
-.how-card:hover{border-color:var(--blue)}
-.how-card .icon{font-size:28px;margin-bottom:12px}
-.how-card h3{font-size:16px;font-weight:600;margin-bottom:6px}
-.how-card p{font-size:13px;color:var(--text-secondary);line-height:1.6}
-.how-card code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:2px 6px;border-radius:4px;color:var(--blue)}
+.sect{padding:80px 24px;max-width:1000px;margin:0 auto}
+.sect h2{font-size:26px;font-weight:700;text-align:center;margin-bottom:6px}
+.sect .sub{text-align:center;color:var(--text2);font-size:14px;margin-bottom:40px}
 
-/* Comparison table */
-.comparison{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;margin:24px 0}
-.comparison th{padding:12px 16px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;border-bottom:2px solid var(--border)}
-.comparison th:first-child{border-radius:8px 0 0 0}
-.comparison th:last-child{border-radius:0 8px 0 0}
-.comparison td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--text-secondary)}
-.comparison tr:hover td{background:var(--surface)}
-.comparison td:first-child{font-weight:500;color:var(--text)}
-.comparison .check{color:var(--green)}
-.comparison .cross{color:var(--text-muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:border-color .2s}
+.card:hover{border-color:var(--blue)}
+.card .ic{font-size:28px;margin-bottom:10px}
+.card h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.card p{font-size:13px;color:var(--text2);line-height:1.6}
+
+.use-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0}
+.use-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:13px;color:var(--text2);line-height:1.5}
+.use-card strong{color:var(--text);display:block;margin-bottom:2px;font-size:14px}
+
+.chat-demo{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;max-width:600px;margin:24px auto}
+.chat-demo .msg{padding:10px 14px;font-size:13.5px;line-height:1.5;border-bottom:1px solid var(--border)}
+.chat-demo .msg:last-child{border-bottom:none}
+.chat-demo .msg .s{font-size:10px;color:var(--text3);margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.chat-demo .msg.user .s{color:var(--blue)}
+.chat-demo .msg.ai .s{color:var(--green)}
+.chat-demo .msg .mem{font-size:10.5px;color:var(--blue);margin-top:2px;font-style:italic}
+
+.code-b{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin:12px 0;font-family:var(--mono);font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--text2)}
+.code-b .cm{color:var(--text3)}
+.code-b .kw{color:var(--blue)}
 
 /* Pricing */
-.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start}
-.price-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 24px;position:relative;transition:border-color .2s}
-.price-card:hover{border-color:var(--blue)}
-.price-card.featured{border-color:var(--blue);background:linear-gradient(135deg,var(--surface),rgba(74,124,255,.05))}
-.price-card .plan{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)}
-.price-card .price{font-size:36px;font-weight:800;margin:8px 0 4px;font-family:var(--mono)}
-.price-card .price span{font-size:14px;font-weight:400;color:var(--text-muted)}
-.price-card .desc{font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.5}
-.price-card ul{list-style:none;margin-bottom:24px}
-.price-card ul li{padding:6px 0;font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
-.price-card ul li::before{content:'✓';color:var(--green);font-weight:700}
-.price-card .btn{display:block;text-align:center;padding:10px;border-radius:8px;font-size:14px;font-weight:600;transition:all .2s;cursor:pointer;font-family:var(--font)}
-.price-card .btn.primary{background:var(--blue);color:#fff;border:none}
-.price-card .btn.primary:hover{opacity:.9}
-.price-card .btn.secondary{border:1px solid var(--border-light);color:var(--text)}
-.price-card .btn.secondary:hover{border-color:var(--blue);color:var(--blue)}
-.price-card .popular{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;padding:3px 14px;border-radius:12px;font-size:11px;font-weight:600}
+.pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;max-width:900px;margin:0 auto}
+.plan{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;position:relative;transition:border-color .2s}
+.plan:hover{border-color:var(--text3)}
+.plan.featured{border-color:var(--blue);border-width:1.5px}
+.plan.featured .tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px;white-space:nowrap}
+.plan .name{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:2px}
+.plan .price{font-size:28px;font-weight:800;margin-bottom:4px}
+.plan .price span{font-size:13px;font-weight:400;color:var(--text3)}
+.plan .desc{font-size:11.5px;color:var(--text3);margin-bottom:12px;line-height:1.5;flex:1}
+.plan ul{list-style:none;padding:0;margin:0 0 16px;font-size:12px;color:var(--text2);line-height:2}
+.plan ul li::before{content:'✓ ';color:var(--green);font-weight:700}
+.plan .buy{display:block;text-align:center;padding:10px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--border);color:var(--text);background:var(--bg);cursor:pointer;text-decoration:none;transition:all .15s}
+.plan .buy:hover{border-color:var(--blue);color:var(--blue)}
+.plan.featured .buy{background:var(--blue);border-color:var(--blue);color:#fff}
+.plan.featured .buy:hover{opacity:.9}
 
-/* CTA */
+.compare{width:100%;border-collapse:collapse;max-width:700px;margin:24px auto;font-size:12.5px}
+.compare th{text-align:left;padding:8px 10px;font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;border-bottom:1px solid var(--border);letter-spacing:.3px}
+.compare td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.compare td:first-child{color:var(--text);font-weight:500}
+.compare td:last-child{text-align:right}
+.compare .y{color:var(--green)}
+.compare .n{color:var(--text3)}
+
 #cta{text-align:center;padding:80px 24px;border-top:1px solid var(--border)}
-#cta h2{font-size:28px;font-weight:700;margin-bottom:8px}
-#cta p{color:var(--text-secondary);margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto}
-#cta .btn{padding:14px 36px;border-radius:10px;font-size:16px;font-weight:600;background:var(--blue);color:#fff;border:none;cursor:pointer;transition:all .2s;font-family:var(--font);display:inline-block}
-#cta .btn:hover{transform:translateY(-1px);box-shadow:0 4px 20px var(--blue-glow)}
-#cta .small{font-size:12px;color:var(--text-muted);margin-top:12px}
+#cta h2{font-size:26px;font-weight:700;margin-bottom:6px}
+#cta p{color:var(--text2);margin-bottom:20px;font-size:14px}
+#cta .btn{padding:14px 36px;border-radius:10px;font-size:16px;font-weight:600;background:var(--blue);color:#fff;border:none;cursor:pointer;display:inline-block;font-family:var(--font)}
+#cta .btn:hover{box-shadow:0 4px 20px rgba(74,124,255,.3)}
+#cta .sm{font-size:12px;color:var(--text3);margin-top:10px}
 
-/* Code blocks */
-.code-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:16px 0;position:relative;font-family:var(--mono);font-size:13px;line-height:1.7;overflow-x:auto;color:var(--text-secondary)}
-.code-block .comment{color:var(--text-muted)}
-.code-block .keyword{color:var(--blue)}
-.code-block .string{color:var(--green)}
-
-/* Footer */
-footer{border-top:1px solid var(--border);padding:24px;text-align:center;font-size:12px;color:var(--text-muted)}
-footer a{color:var(--text-secondary)}
+footer{border-top:1px solid var(--border);padding:24px;text-align:center;font-size:12px;color:var(--text3)}
+footer a{color:var(--text2)}
 footer a:hover{color:var(--text)}
 
-/* Responsive */
-@media(max-width:640px){
-  #hero{padding:100px 16px 60px}
-  .section{padding:48px 16px}
-  nav .nav-right a:not(.btn){display:none}
-  .pricing-grid{grid-template-columns:1fr}
-}
+@media(max-width:640px){#hero{padding:100px 16px 40px}.sect{padding:48px 16px}}
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo">ICM<span>.</span></div>
-  <div class="nav-right">
-    <a href="#how">How it Works</a>
+  <div class="logo">ICM <span class="badge">Infinite Memory</span></div>
+  <div class="nav-r">
+    <a href="#how">How It Works</a>
     <a href="#pricing">Pricing</a>
+    <a href="#uses">Use Cases</a>
+    <a href="chat.html">Demo</a>
     <a href="https://github.com/varshinicb1/hyper-ssm-ultimate" target="_blank">GitHub</a>
-    <a href="playground.html" class="btn">Playground</a>
-    <a href="#cta" class="btn primary">Get Started</a>
+    <a href="#deploy" class="btn">Extension</a>
+    <a href="checkout.html" class="btn prim">Get ICM Cloud →</a>
   </div>
 </nav>
 
 <!-- Hero -->
 <section id="hero">
-  <div class="tag">Now Open Source · v0.2.0</div>
-  <h1>Infinite Context <span>Memory</span><br>for Any LLM</h1>
-  <p>Replace the KV-cache with 260 bytes of hyperbolic state. Or get 100% exact recall with our O(log N) tree memory. No training. No GPU required.</p>
+  <h1>AI That <span>Remembers Everything</span><br>You've Ever Said</h1>
+  <p>One conversation can be 1M tokens. You might have hundreds of them.<br>
+  <strong>ICM is the memory layer</strong> that links them all — recall any fact from any chat, instantly.</p>
   <div class="actions">
-    <a href="playground.html" class="btn primary">Try Live Playground →</a>
-    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate" class="btn secondary" target="_blank">View on GitHub</a>
-    <a href="#cta" class="btn secondary">Deploy Now</a>
+    <a href="chat.html" class="btn prim">Try It Now →</a>
+    <a href="#how" class="btn sec">How It Works</a>
   </div>
-  <div class="stats">
-    <div class="stat"><div class="num">260 B</div><div class="lbl">Flat Memory State</div></div>
-    <div class="stat"><div class="num">100%</div><div class="lbl">NIAH Tree Recall</div></div>
-    <div class="stat"><div class="num">~3.7ms</div><div class="lbl">Recall at 500 Turns</div></div>
-    <div class="stat"><div class="num">81</div><div class="lbl">Passing Tests</div></div>
-  </div>
-</section>
-
-<!-- How it Works -->
-<section class="section" id="how">
-  <h2>Two Backends, One Goal</h2>
-  <p class="subtitle">KV-cache replacement that doesn't grow with context length.</p>
-  <div class="how-grid">
-    <div class="how-card">
-      <div class="icon">⚡</div>
-      <h3>Flat Memory <code style="font-size:11px">O(1)</code></h3>
-      <p>Each utterance maps to a point on the Lorentz hyperboloid. A gated recurrence compresses the entire conversation into a <strong>fixed 260-byte state</strong>. No matter how long the chat, the memory stays the same size.</p>
-    </div>
-    <div class="how-card">
-      <div class="icon">🌳</div>
-      <h3>Tree Memory <code style="font-size:11px">O(log N)</code></h3>
-      <p>Every fact is stored in a hyperbolic B-tree with beam search recall. <strong>100% exact retrieval</strong> in logarithmic time. Tested at 500 turns with 3.7ms average latency.</p>
-    </div>
-    <div class="how-card">
-      <div class="icon">🔌</div>
-      <h3>Any Model, Zero Training</h3>
-      <p>Works with every HuggingFace model. <strong>No fine-tuning</strong>, no GPU required. Plug it into GPT-2, Llama, Qwen, Phi-3 — just <code>pip install icm-llm</code>.</p>
-    </div>
-    <div class="how-card">
-      <div class="icon">🗄️</div>
-      <h3>SQLite Persistence</h3>
-      <p>Sessions survive server restarts. Export conversations as JSON or Markdown. Docker deployment in one command.</p>
-    </div>
-    <div class="how-card">
-      <div class="icon">🔐</div>
-      <h3>Auth &amp; Rate Limiting</h3>
-      <p>Built-in API key authentication with per-key rate limiting. Production-ready for public deployments.</p>
-    </div>
-    <div class="how-card">
-      <div class="icon">📊</div>
-      <h3>Benchmark Suite</h3>
-      <p>Needle-in-a-Haystack, memory scaling, latency — all runnable with a single command. Tree achieves <strong>100% recall</strong> at all context lengths tested.</p>
-    </div>
+  <div class="proof">
+    <div class="p"><div class="n">260 B</div><div class="l">Memory per conversation</div></div>
+    <div class="p"><div class="n">100%</div><div class="l">Recall accuracy</div></div>
+    <div class="p"><div class="n">~3.7ms</div><div class="l">Retrieval speed</div></div>
+    <div class="p"><div class="n">₹0</div><div class="l">Open source</div></div>
   </div>
 </section>
 
-<!-- Quick Start -->
-<section class="section" style="padding-top:0">
-  <h2>Try It in 5 Seconds</h2>
-  <p class="subtitle">No account. No GPU. No training.</p>
-  <div class="code-block">
-    <span class="comment"># Install</span><br>
-    pip install icm-llm<br><br>
-    <span class="comment"># Demo with tree memory (no LLM needed)</span><br>
-    icm-demo --memory-backend tree<br><br>
-    <span class="comment"># Chat with real LLM</span><br>
-    icm-chat --model gpt2 --memory-backend tree<br><br>
-    <span class="comment"># Production server</span><br>
-    icm-server --model TinyLlama/TinyLlama-1.1B-Chat-v1.0
+<!-- Problem -->
+<section class="sect" id="how">
+  <h2>The Problem: AI Has Amnesia</h2>
+  <p class="sub">Every time you start a new chat, the AI forgets everything you told it before.</p>
+  <div class="chat-demo">
+    <div class="msg user"><div class="s">Chat #1: Project Planning (Jan 2026)</div>Our architecture uses React frontend, FastAPI backend, PostgreSQL. The repo is at github.com/our-project.</div>
+    <div class="msg ai"><div class="s">ChatGPT</div>Got it. I'll remember this stack for future reference.</div>
+    <div class="msg user"><div class="s">Chat #2: Bug Fixing (Mar 2026)</div>We're getting a connection pool timeout on PostgreSQL. Max suggested setting pool_size=20.</div>
+    <div class="msg ai"><div class="s">ChatGPT</div>Good fix. Max from your team? I'll note this.</div>
+    <div class="msg user"><div class="s">Chat #37: New Feature (Jun 2026)</div>We need to add Redis caching. What's our current stack again?</div>
+    <div class="msg ai" style="background:rgba(239,68,68,.08)"><div class="s">ChatGPT</div>I don't have access to our previous conversations. You'll need to remind me...</div>
+  </div>
+  <div style="text-align:center;margin-top:8px"><strong style="color:var(--red)">✕</strong> <span style="color:var(--text2);font-size:13px">Every AI today is a goldfish. Each chat is a clean slate.</span></div>
+</section>
+
+<!-- Solution -->
+<section class="sect" style="padding-top:0">
+  <h2>With ICM, It Never Happens Again</h2>
+  <p class="sub">The AI remembers everything — across sessions, across days, forever.</p>
+  <div class="chat-demo">
+    <div class="msg user"><div class="s">Chat #1: Project Planning (Jan 2026)</div>Our architecture uses React frontend, FastAPI backend, PostgreSQL. The repo is at github.com/our-project.</div>
+    <div class="msg ai"><div class="s">ICM + AI</div>Saved: React + FastAPI + PostgreSQL stack. Referenced as "current project stack."</div>
+    <div class="msg user"><div class="s">Chat #2: Bug Fixing (Mar 2026)</div>We're getting a connection pool timeout on PostgreSQL. Max suggested setting pool_size=20.</div>
+    <div class="msg ai"><div class="s">ICM + AI</div>Noted. Cross-referencing: your stack uses PostgreSQL (from Chat #1). pool_size=20 is a known fix.</div>
+    <div class="msg user"><div class="s">Chat #37: New Feature (Jun 2026)</div>We need to add Redis caching. What's our current stack?</div>
+    <div class="msg ai" style="background:rgba(34,197,94,.08)"><div class="s">ICM + AI</div>Your stack: <strong>React</strong> (frontend), <strong>FastAPI</strong> (backend), <strong>PostgreSQL</strong> with <strong>pool_size=20</strong> (from Chat #2, suggested by Max). The repo is at github.com/our-project.<br><br>For Redis — I'd recommend placing it between FastAPI and PostgreSQL as a query cache. Want me to draft the integration? <span class="mem">↻ Recalled from Chats #1, #2, #5</span></div>
+  </div>
+  <div style="text-align:center;margin-top:8px"><strong style="color:var(--green)">✓</strong> <span style="color:var(--text2);font-size:13px">ICM remembers across every conversation. From January to June. From 5 messages or 1M tokens.</span></div>
+</section>
+
+<!-- Use Cases -->
+<section class="sect" id="uses">
+  <h2>What You Can Build With It</h2>
+  <p class="sub">One memory layer. Infinite possibilities.</p>
+  <div class="use-grid">
+    <div class="use-card"><strong>Personal AI Assistant</strong>An AI that knows your name, your job, your family, your preferences — across every conversation, forever.</div>
+    <div class="use-card"><strong>Customer Support</strong>Every customer interaction is remembered. No more "as I mentioned earlier..." — the AI already knows.</div>
+    <div class="use-card"><strong>AI Therapist / Coach</strong>Remembers your entire history. Can reference something you said 6 months ago. Real continuity of care.</div>
+    <div class="use-card"><strong>Coding Assistant</strong>A co-pilot that remembers your entire codebase, your coding style, your past decisions — not just the current file.</div>
+    <div class="use-card"><strong>AI Companion</strong>Remembers your life — your stories, your preferences, your inside jokes. Feels like a real relationship.</div>
+    <div class="use-card"><strong>Research Assistant</strong>Ingest hundreds of papers. Ask questions weeks later — it remembers every finding you discussed.</div>
   </div>
 </section>
 
-<!-- Comparison -->
-<section class="section" style="padding-top:0">
-  <h2>ICM vs The Alternatives</h2>
-  <p class="subtitle">The only memory system that offers both O(1) compression and O(log N) exact recall.</p>
-  <table class="comparison">
-    <tr><th></th><th>ICM Flat</th><th>ICM Tree</th><th>KV-Cache</th><th>RAG</th><th>SSM (Mamba)</th></tr>
-    <tr><td>Memory Growth</td><td class="check">O(1)</td><td>O(N)</td><td>O(N²)</td><td>O(N)</td><td class="check">O(1)</td></tr>
-    <tr><td>Exact Retrieval</td><td class="cross">No</td><td class="check">Yes (100%)</td><td class="check">Yes</td><td class="check">Yes</td><td class="cross">No</td></tr>
-    <tr><td>Training Required</td><td class="check">No</td><td class="check">No</td><td class="check">No</td><td class="cross">Yes</td><td class="cross">Yes</td></tr>
-    <tr><td>GPU Required</td><td class="check">No</td><td class="check">No</td><td class="check">Yes</td><td class="check">Yes</td><td class="check">Yes</td></tr>
-    <tr><td>260 Byte State</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
-    <tr><td>Any HuggingFace Model</td><td class="check">Yes</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
-    <tr><td>Docker Deploy</td><td class="check">Yes</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
-  </table>
+<!-- How it works (simple) -->
+<section class="sect" style="padding-top:0">
+  <h2>How It Works (Plain English)</h2>
+  <p class="sub">No jargon. Just what matters.</p>
+  <div class="grid2">
+    <div class="card">
+      <div class="ic">🧠</div>
+      <h3>Memory Compression</h3>
+      <p>Every fact you tell the AI gets compressed into a tiny mathematical representation — just 260 bytes. That's smaller than a tweet, for an entire lifetime of conversations.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🔍</div>
+      <h3>Instant Recall</h3>
+      <p>When you ask a question, ICM finds the exact fact you're talking about in milliseconds — even from thousands of past conversations.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🔌</div>
+      <h3>Plug Into Any AI</h3>
+      <p>Works with ChatGPT, Llama, Claude, or any AI model. No training needed. No GPU required. Works on a laptop.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🔐</div>
+      <h3>You Own Your Data</h3>
+      <p>Self-host or use our cloud. Your memories stay private. Export anytime as JSON or Markdown.</p>
+    </div>
+  </div>
 </section>
 
 <!-- Pricing -->
-<section class="section" id="pricing">
-  <h2>Simple Pricing</h2>
-  <p class="subtitle">Start free. Scale when you're ready.</p>
-  <div class="pricing-grid">
-    <div class="price-card">
-      <div class="plan">Open Source</div>
-      <div class="price">$0<span>/mo</span></div>
-      <div class="desc">Self-hosted. Unlimited sessions. Full code access.</div>
+<section class="sect" id="pricing">
+  <h2>Pick Your Memory Plan</h2>
+  <p class="sub">From free Chrome extension to enterprise deployment.</p>
+
+  <div class="pricing">
+    <div class="plan">
+      <div class="name">Free</div>
+      <div class="price">$0 <span>forever</span></div>
+      <div class="desc">Chrome extension with local memory. Perfect for personal use.</div>
       <ul>
-        <li>Both memory backends</li>
-        <li>All HuggingFace models</li>
-        <li>Docker compose deployment</li>
-        <li>REST API + WebSocket</li>
-        <li>CLI chat + demo</li>
-        <li>SQLite persistence</li>
+        <li>Unlimited memory on-device</li>
+        <li>Auto-saves ChatGPT conversations</li>
+        <li>Search & inject past context</li>
+        <li>Right-click save from any page</li>
       </ul>
-      <a href="https://github.com/varshinicb1/hyper-ssm-ultimate" class="btn secondary">View on GitHub</a>
+      <a href="chrome-extension/ai-memory.zip" class="buy" download>Install Extension →</a>
     </div>
-    <div class="price-card featured">
-      <div class="popular">Popular</div>
-      <div class="plan">Hosted API</div>
-      <div class="price">$29<span>/mo</span></div>
-      <div class="desc">Managed cloud service. No infrastructure. 10K sessions.</div>
+
+    <div class="plan featured">
+      <div class="tag">Most Popular</div>
+      <div class="name">ICM Cloud</div>
+      <div class="price">₹1,249 <span>/ month</span></div>
+      <div class="desc">Hosted AI with infinite memory. GPT-4 included. UPI / cards accepted.</div>
       <ul>
-        <li>Everything in Open Source</li>
-        <li>Managed hosting</li>
-        <li>10,000 sessions/mo</li>
+        <li>GPT-4 with infinite memory</li>
+        <li>Cloud sync across devices</li>
+        <li>Unlimited conversations</li>
+        <li>Export memories to Markdown</li>
+      </ul>
+      <a href="checkout.html" class="buy">Subscribe →</a>
+    </div>
+
+    <div class="plan">
+      <div class="name">API</div>
+      <div class="price">₹2,419 <span>/ month</span></div>
+      <div class="desc">Add infinite memory to your own AI app. 10K queries included.</div>
+      <ul>
+        <li>10,000 memory queries/mo</li>
+        <li>REST API + SDK</li>
+        <li>Works with any LLM</li>
         <li>99.9% uptime SLA</li>
-        <li>Priority support</li>
-        <li>API key management</li>
       </ul>
-      <a href="#cta" class="btn primary">Get Started</a>
+      <a href="checkout.html" class="buy">Subscribe →</a>
     </div>
-    <div class="price-card">
-      <div class="plan">Enterprise</div>
+
+    <div class="plan">
+      <div class="name">Enterprise</div>
       <div class="price">Custom</div>
-      <div class="desc">Dedicated infra, custom SLAs, on-prem deployment.</div>
+      <div class="desc">On-premise deployment, custom integrations, priority support.</div>
       <ul>
-        <li>Everything in Hosted</li>
-        <li>Unlimited sessions</li>
-        <li>On-premise deployment</li>
-        <li>Custom SLAs</li>
+        <li>Self-hosted deployment</li>
+        <li>Custom SLA</li>
         <li>Dedicated support</li>
-        <li>SSO / SAML</li>
+        <li>SSO / RBAC</li>
       </ul>
-      <a href="mailto:varshinicb1@github.com" class="btn secondary">Contact Us</a>
+      <a href="mailto:hello@icm-llm.com?subject=Enterprise%20Inquiry" class="buy">Contact Us →</a>
+    </div>
+  </div>
+
+  <table class="compare">
+    <tr><th>Feature</th><th>Free</th><th>Cloud</th><th>API</th><th>Enterprise</th></tr>
+    <tr><td>Local memory (browser)</td><td class="y">✓</td><td class="y">✓</td><td class="n">—</td><td class="y">✓</td></tr>
+    <tr><td>Cloud memory sync</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>GPT-4 / Claude included</td><td class="n">—</td><td class="y">✓</td><td class="n">—</td><td class="y">✓</td></tr>
+    <tr><td>API access</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>Self-host option</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td></tr>
+    <tr><td>Auto-save conversations</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>100% recall accuracy</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>Memory export</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>Priority support</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td></tr>
+  </table>
+  <p style="text-align:center;font-size:11px;color:var(--text3);margin-top:8px">All plans include the core HyperbolicMemoryTree engine. Open source code available on <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">GitHub</a>.</p>
+</section>
+
+<!-- Deploy -->
+<section class="sect" id="deploy" style="padding-top:0">
+  <h2>Use It With ChatGPT — Right Now</h2>
+  <p class="sub">The Chrome extension gives your AI a memory. Works on ChatGPT, Claude, and Gemini.</p>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:500px;margin:0 auto;text-align:center">
+    <div style="font-size:36px;margin-bottom:8px">🧠</div>
+    <h3 style="font-size:17px;font-weight:600;margin-bottom:4px">AI Memory Extension</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+      Save important information from any conversation.<br>
+      Recall it instantly in new chats.<br>
+      Your memories stay on your device.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:left;flex:1;min-width:180px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text)">How it works</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7">
+          1. Install the extension<br>
+          2. Use ChatGPT normally<br>
+          3. Right-click → "Save to AI Memory"<br>
+          4. In a new chat, open the memory panel<br>
+          5. Search & inject relevant context
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;font-size:12px;color:var(--text3);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px">
+      ⚡ Requires Chrome. Install via <strong>chrome://extensions</strong> → Developer mode → Load unpacked.
+      <br>Coming to Chrome Web Store soon.
     </div>
   </div>
 </section>
 
-<!-- CTA -->
+<section class="sect" id="deploy-api" style="padding-top:0">
+  <h2>For Developers: Add to Your Own App</h2>
+  <p class="sub">One pip install. Works with any AI model.</p>
+  <div class="code-b">
+    <span class="cm"># Install</span><br>
+    pip install icm-llm<br><br>
+    <span class="cm"># Start chatting (with infinite memory)</span><br>
+    icm-chat --model gpt2<br><br>
+    <span class="cm"># Or launch the web app</span><br>
+    icm-server --port 8000<br>
+    <span class="cm"># Then open http://localhost:8000</span>
+  </div>
+  <div style="text-align:center;margin-top:12px">
+    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate" class="btn" style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;background:var(--surface);border:1px solid var(--border);color:var(--text);display:inline-block;text-decoration:none">View on GitHub →</a>
+  </div>
+</section>
+
+<!-- Try It -->
 <section id="cta">
-  <h2>Ready for Infinite Context?</h2>
-  <p>One command to deploy. Zero configuration needed.</p>
-  <a href="playground.html" class="btn">Try the Playground →</a>
-  <div class="small">No signup. No installation. Works in your browser.</div>
+  <h2>Ready for an AI That Remembers?</h2>
+  <p>Start free with the Chrome extension. Upgrade to ICM Cloud for GPT-4 with infinite memory.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="chrome-extension/ai-memory.zip" class="btn" download>Free Extension ↓</a>
+    <a href="checkout.html" class="btn" style="background:var(--green);border-color:var(--green)">Subscribe ₹1,249/mo →</a>
+  </div>
+  <div class="sm">Open source on GitHub · 81 tests · 100% recall</div>
 </section>
 
 <footer>
   <a href="https://github.com/varshinicb1/hyper-ssm-ultimate" target="_blank">GitHub</a>
-  &nbsp;·&nbsp; <a href="playground.html">Playground</a>
+  &nbsp;·&nbsp; <a href="chat.html">Demo</a>
+  &nbsp;·&nbsp; <a href="checkout.html">Pricing</a>
   &nbsp;·&nbsp; <a href="https://pypi.org/project/icm-llm/" target="_blank">PyPI</a>
-  &nbsp;·&nbsp; <a href="mailto:varshinicb1@github.com">Contact</a>
+  &nbsp;·&nbsp; <a href="https://github.com/sponsors/varshinicb1" target="_blank">Sponsor</a>
+  &nbsp;·&nbsp; <a href="https://www.buymeacoffee.com/varshinicb1" target="_blank">Buy Me a Coffee</a>
   <br><br>
-  &copy; 2026 Infinite Context Memory. Apache 2.0 License.
+  <span style="font-size:10px;color:var(--text3)">Payments by Razorpay · UPI · GPay · PhonePe · Cards · Net Banking</span>
+  <br>
+  &copy; 2026 Infinite Context Memory. Apache 2.0.
 </footer>
 
 </body>

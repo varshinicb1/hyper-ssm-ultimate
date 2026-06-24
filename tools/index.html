@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ICM Tool Factory — Free & Paid Tools</title>
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#1e1e2e;--text:#e8e8f0;--text2:#8888a0;--text3:#55556a;--blue:#4a7cff;--green:#22c55e;--amber:#eab308;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SFMono-Regular',Consolas,monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.6}
+header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
+header .logo{font-size:16px;font-weight:700}header .logo span{color:var(--blue)}
+header nav{margin-left:auto;display:flex;gap:16px;align-items:center}
+header nav a{font-size:13px;color:var(--text2);text-decoration:none}
+header nav a:hover{color:var(--text)}
+.container{max-width:1000px;margin:0 auto;padding:40px 24px}
+h1{font-size:28px;font-weight:800;margin-bottom:6px}h1 span{color:var(--blue)}
+.sub{color:var(--text2);font-size:14px;margin-bottom:30px}
+.section-title{font-size:16px;font-weight:700;margin:30px 0 14px;display:flex;align-items:center;gap:8px}
+.section-title .tag{font-size:9px;font-weight:600;padding:2px 8px;border-radius:10px;text-transform:uppercase}
+.tag.chrome{background:rgba(74,124,255,.15);color:var(--blue)}
+.tag.web{background:rgba(34,197,94,.15);color:var(--green)}
+.tag.vscode{background:rgba(234,179,8,.15);color:var(--amber)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;transition:border-color .2s;display:flex;flex-direction:column}
+.card:hover{border-color:var(--text3)}
+.card .cat{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px}
+.card h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.card p{font-size:12.5px;color:var(--text2);line-height:1.5;flex:1;margin-bottom:10px}
+.card .btns{display:flex;gap:6px;flex-wrap:wrap}
+.card .btns a{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;text-decoration:none;transition:all .15s}
+.card .btns .free{background:var(--surface);border:1px solid var(--border);color:var(--text2)}
+.card .btns .free:hover{border-color:var(--blue);color:var(--blue)}
+.card .btns .paid{background:var(--blue);color:#fff}
+.card .btns .paid:hover{opacity:.85}
+.card .btns .soon{background:var(--surface);border:1px solid var(--border);color:var(--text3);cursor:default}
+.price-tag{font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:6px}
+.total-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:30px;text-align:center}
+.total-bar .n{font-size:24px;font-weight:800;color:var(--blue)}
+.total-bar .l{font-size:12px;color:var(--text2)}
+footer{border-top:1px solid var(--border);padding:24px;text-align:center;font-size:12px;color:var(--text3);margin-top:40px}
+footer a{color:var(--text2);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ICM <span>Tool Factory</span></div>
+  <nav>
+    <a href="#chrome">Chrome Extensions</a>
+    <a href="#web">Web Tools</a>
+    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">GitHub</a>
+    <a href="https://github.com/sponsors/varshinicb1">Sponsor</a>
+    <a href="https://www.buymeacoffee.com/varshinicb1">☕</a>
+  </nav>
+</header>
+<div class="container">
+  <h1>🧰 <span>Tool Factory</span></h1>
+  <p class="sub">Free + paid tools built with ❤️. Chrome extensions, web apps, VS Code extensions. No data leaves your device.</p>
+
+  <div class="section-title">🖥️ <span>Chrome Extensions</span> <span class="tag chrome">Chrome Web Store</span></div>
+  <div class="grid" id="chrome">
+    <div class="card">
+      <div class="cat">Productivity</div>
+      <h3>AI Memory</h3>
+      <p>Infinite memory for ChatGPT. Auto-saves conversations. Recall past context instantly.</p>
+      <div class="price-tag">₹299 one-time</div>
+      <div class="btns">
+        <a href="../chrome-extensions/ai-memory/ai-memory.zip" class="free">Download ZIP</a>
+        <a href="#" class="paid">Buy on Chrome Web Store</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cat">Design</div>
+      <h3>Color Picker Pro</h3>
+      <p>Pick colors from any webpage. Save your palette. Copy hex/rgb/hsl/cmyk in one click.</p>
+      <div class="price-tag">₹149 one-time</div>
+      <div class="btns">
+        <a href="../chrome-extensions/color-picker" class="free">Source</a>
+        <a href="#" class="soon">Coming Soon</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cat">Productivity</div>
+      <h3>QR Generator</h3>
+      <p>Generate QR codes from the current page URL, selected text, or custom input. One-click copy.</p>
+      <div class="price-tag">₹99 one-time</div>
+      <div class="btns">
+        <a href="#" class="soon">Coming Soon</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">🌐 <span>Web Tools</span> <span class="tag web">GitHub Pages · Free</span></div>
+  <div class="grid" id="web">
+    <div class="card">
+      <div class="cat">Developer Tool</div>
+      <h3>JSON Formatter</h3>
+      <p>Format, validate, minify JSON. Open files, copy, download. All client-side.</p>
+      <div class="price-tag">Free</div>
+      <div class="btns">
+        <a href="../web-tools/json-formatter/index.html" class="free">Use Now →</a>
+        <a href="https://www.buymeacoffee.com/varshinicb1" class="free">Donate</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cat">Writing</div>
+      <h3>Markdown Editor</h3>
+      <p>Write markdown with live preview. Download as HTML or MD. No server, no login.</p>
+      <div class="price-tag">Free</div>
+      <div class="btns">
+        <a href="../web-tools/markdown-editor/index.html" class="free">Use Now →</a>
+        <a href="https://www.buymeacoffee.com/varshinicb1" class="free">Donate</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">📝 <span>VS Code Extensions</span> <span class="tag vscode">Marketplace · Free</span></div>
+  <div class="grid" id="vscode">
+    <div class="card">
+      <div class="cat">Developer Tool</div>
+      <h3>Snippet Manager</h3>
+      <p>Save, organize, and insert code snippets. Searchable library with syntax highlighting.</p>
+      <div class="price-tag">Free (donations welcome)</div>
+      <div class="btns">
+        <a href="#" class="soon">Coming Soon</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="total-bar">
+    <div class="n">2</div>
+    <div class="l">tools published · <strong>3</strong> in development</div>
+    <div style="margin-top:6px;font-size:12px;color:var(--text2)">
+      <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">⭐ Star on GitHub</a> ·
+      <a href="https://github.com/sponsors/varshinicb1">💖 Sponsor</a> ·
+      <a href="https://www.buymeacoffee.com/varshinicb1">☕ Buy Me a Coffee</a>
+    </div>
+  </div>
+</div>
+<footer>
+  Made with ❤️ · Free + paid tools · India · <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">GitHub</a>
+</footer>
+</body>
+</html>

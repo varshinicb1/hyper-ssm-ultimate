@@ -1,0 +1,120 @@
+/* ─── ICM Memory Panel ─── */
+#icm-memory-panel {
+  all: initial;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e6edf3;
+  z-index: 2147483647;
+}
+#icm-toggle {
+  position: fixed; bottom: 20px; right: 20px;
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, #4a7cff, #a78bfa);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 20px;
+  box-shadow: 0 4px 16px rgba(74,124,255,0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+  z-index: 2147483647;
+  user-select: none;
+}
+#icm-toggle:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(74,124,255,0.5); }
+#icm-badge {
+  position: absolute; top: -6px; right: -6px;
+  background: #ef4444; color: #fff;
+  font-size: 10px; font-weight: 700;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
+#icm-panel {
+  display: none;
+  position: fixed; bottom: 72px; right: 20px;
+  width: 340px; max-height: 500px;
+  background: #151b23;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 2147483647;
+  overflow: hidden;
+}
+#icm-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid #30363d;
+  font-weight: 600; font-size: 13px;
+}
+#icm-close { cursor: pointer; color: #8b949e; font-size: 16px; }
+#icm-close:hover { color: #e6edf3; }
+#icm-body { padding: 10px; overflow-y: auto; flex: 1; }
+#icm-save-row, #icm-search-row {
+  display: flex; gap: 6px; margin-bottom: 8px;
+}
+#icm-body input {
+  flex: 1; background: #0d1117; border: 1px solid #30363d;
+  border-radius: 6px; padding: 6px 10px; color: #e6edf3;
+  font-family: inherit; font-size: 12px; outline: none;
+}
+#icm-body input:focus { border-color: #4a7cff; }
+#icm-body input::placeholder { color: #6e7681; }
+#icm-body button {
+  padding: 6px 12px; border-radius: 6px; border: none;
+  cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 500;
+  background: #4a7cff; color: #fff; transition: opacity 0.15s;
+  white-space: nowrap;
+}
+#icm-body button:hover { opacity: 0.85; }
+#icm-results { margin: 6px 0; max-height: 280px; overflow-y: auto; }
+#icm-results .icm-empty { color: #6e7681; font-size: 12px; text-align: center; padding: 16px; }
+.icm-result {
+  padding: 8px 10px; margin-bottom: 4px; border-radius: 6px;
+  border: 1px solid #30363d; cursor: pointer; transition: all 0.15s;
+}
+.icm-result:hover { border-color: #4a7cff; background: rgba(74,124,255,0.08); }
+.icm-result.icm-selected { border-color: #4a7cff; background: rgba(74,124,255,0.15); }
+.icm-r-topic {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.3px; color: #4a7cff; margin-bottom: 2px;
+}
+.icm-r-text { font-size: 12px; color: #8b949e; line-height: 1.4; }
+.icm-r-sim { font-size: 10px; color: #6e7681; margin-top: 2px; }
+#icm-stats { font-size: 11px; color: #6e7681; margin-top: 6px; }
+#icm-inject-btn {
+  display: none; width: 100%; margin-top: 6px;
+  padding: 8px; border-radius: 6px; border: 1px solid #22c55e;
+  background: rgba(34,197,94,0.12); color: #22c55e;
+  cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
+  transition: background 0.15s;
+}
+#icm-inject-btn:hover { background: rgba(34,197,94,0.2); }
+#icm-toast {
+  position: fixed; bottom: 74px; right: 80px;
+  padding: 6px 14px; border-radius: 6px;
+  background: #151b23; border: 1px solid #30363d;
+  color: #8b949e; font-size: 12px;
+  display: none; z-index: 2147483647;
+  transition: opacity 0.3s;
+}
+
+/* Auto-suggest */
+#icm-suggest {
+  display: none;
+  position: fixed; bottom: 70px; right: 72px;
+  width: 320px; max-height: 200px; overflow-y: auto;
+  background: #151b23; border: 1px solid #30363d;
+  border-radius: 10px; padding: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  z-index: 2147483647;
+}
+.icm-sug-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 1px;
+  transition: background 0.15s;
+}
+.icm-sug-item:hover { background: rgba(74,124,255,0.12); }
+.icm-sug-topic { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #4a7cff; }
+.icm-sug-text { font-size: 11.5px; color: #8b949e; line-height: 1.3; }
+
+/* Auto-save indicator (injected into ChatGPT DOM) */
+.icm-auto-saved { font-size: 10px; color: #22c55e; margin-left: 6px; opacity: 0.6; user-select: none; }

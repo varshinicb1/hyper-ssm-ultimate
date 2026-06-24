@@ -49,6 +49,17 @@ pip install icm-llm && icm-demo --memory-backend tree
 
 That's it. You'll see a hyperbolic memory tree storing and recalling facts with 100% accuracy.
 
+### 🌐 Use It With ChatGPT (No Coding)
+
+**[Chrome Extension →](/chrome-extension)** Adds infinite memory to ChatGPT, Claude, and Gemini.
+
+1. Open `chrome://extensions` → Enable **Developer mode**
+2. Click **Load unpacked** → Select the `chrome-extension/` folder
+3. Use ChatGPT normally. **Right-click** any text → "Save to AI Memory"
+4. Open new chats → Memory panel → **Inject** past context
+
+Your memories stay on your device. No server. No API key.
+
 More ways:
 
 | Method | Command |
@@ -239,6 +250,46 @@ pytest tests/ -v
 ## 📜 License
 
 Apache 2.0
+
+---
+
+## 💳 Payments (India)
+
+ICM uses **Razorpay** for Indian payment processing. UPI, GPay, PhonePe, credit/debit cards, and net banking accepted.
+
+**To accept payments for your ICM deployment:**
+
+1. Sign up at [razorpay.com](https://razorpay.com) (free, requires Indian business docs)
+2. Create **Subscription Plans** in Razorpay dashboard:
+   - **ICM Cloud**: ₹1,249/month
+   - **API**: ₹2,419/month
+   - **Combo**: ₹2,999/month
+3. Create **Payment Links** for each plan
+4. Replace `PLACEHOLDER_CLOUD`, `PLACEHOLDER_API`, `PLACEHOLDER_COMBO` in `checkout.html`
+5. Deploy the server with Razorpay webhook for auto-provisioning
+
+See `checkout.html` for the integration code. Open an issue if you need help.
+
+---
+
+## 💖 Support the Project
+
+ICM is open source and free. If it helps you, consider supporting:
+
+<p align="center">
+  <a href="https://github.com/sponsors/varshinicb1">
+    <img src="https://img.shields.io/badge/GitHub%20Sponsors-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors" />
+  </a>
+  <a href="https://www.buymeacoffee.com/varshinicb1">
+    <img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee" />
+  </a>
+  <a href="checkout.html">
+    <img src="https://img.shields.io/badge/ICM%20Cloud%20₹1,249/mo-4a7cff?style=for-the-badge" alt="ICM Cloud" />
+  </a>
+  <a href="checkout.html">
+    <img src="https://img.shields.io/badge/API%20₹2,419/mo-22c55e?style=for-the-badge" alt="API" />
+  </a>
+</p>
 
 ---
 

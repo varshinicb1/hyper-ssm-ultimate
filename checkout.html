@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ICM Cloud — Checkout</title>
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#1e1e2e;--text:#e8e8f0;--text2:#8888a0;--text3:#55556a;--blue:#4a7cff;--green:#22c55e;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.6;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+.container{max-width:500px;width:100%;padding:60px 20px 40px}
+h1{font-size:22px;font-weight:800;margin-bottom:4px}
+h1 span{background:linear-gradient(135deg,var(--blue),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+p.sub{color:var(--text2);font-size:13px;margin-bottom:24px}
+.plan-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;transition:border-color .2s}
+.plan-box:hover{border-color:var(--text3)}
+.plan-box.popular{border-color:var(--blue);border-width:1.5px;position:relative}
+.plan-box.popular .tag{position:absolute;top:-10px;left:20px;background:var(--blue);color:#fff;font-size:10px;font-weight:600;padding:2px 10px;border-radius:10px}
+.plan-box .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.plan-box .name{font-size:15px;font-weight:600}
+.plan-box .price{font-size:26px;font-weight:800}
+.plan-box .price span{font-size:13px;font-weight:400;color:var(--text3)}
+.plan-box .desc{font-size:12px;color:var(--text2);margin-bottom:12px}
+.plan-box ul{list-style:none;padding:0;margin:0 0 14px;font-size:12px;color:var(--text2);line-height:2}
+.plan-box ul li::before{content:'✓ ';color:var(--green);font-weight:700}
+.plan-box .btn{display:block;text-align:center;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s}
+.plan-box .btn.primary{background:var(--blue);color:#fff;border:none}
+.plan-box .btn.primary:hover{opacity:.9}
+.plan-box .btn.outline{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.plan-box .btn.outline:hover{border-color:var(--blue);color:var(--blue)}
+.payment-methods{display:flex;gap:8px;justify-content:center;margin:16px 0 24px;flex-wrap:wrap}
+.payment-methods span{font-size:10px;padding:4px 10px;border-radius:4px;background:var(--surface);border:1px solid var(--border);color:var(--text3)}
+.setup-guide{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:20px;font-size:12px;color:var(--text2);line-height:1.7}
+.setup-guide h3{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.setup-guide code{background:var(--bg);padding:1px 5px;border-radius:3px;font-family:'SFMono-Regular',Consolas,monospace;font-size:11px;color:var(--text)}
+.setup-guide ol{padding-left:18px}
+.setup-guide li{margin-bottom:4px}
+footer{padding:20px;text-align:center;font-size:11px;color:var(--text3);width:100%}
+footer a{color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" style="font-size:11px;color:var(--text3);text-decoration:none;margin-bottom:12px;display:inline-block">← Back to Home</a>
+  <h1>ICM <span>Cloud</span></h1>
+  <p class="sub">AI with infinite memory. Pay in INR. UPI, cards, net banking accepted.</p>
+
+  <div class="plan-box">
+    <div class="top"><div class="name">ICM Cloud</div><div class="price">₹1,249 <span>/ month</span></div></div>
+    <div class="desc">GPT-4 with infinite memory. Cloud sync across devices. Unlimited conversations.</div>
+    <ul>
+      <li>GPT-4 with infinite memory</li>
+      <li>Cloud sync across devices</li>
+      <li>Unlimited conversations</li>
+      <li>Export memories to Markdown</li>
+    </ul>
+    <a id="cloud-link" href="https://rzp.io/PLACEHOLDER_CLOUD" class="btn primary" target="_blank">Subscribe via Razorpay →</a>
+  </div>
+
+  <div class="plan-box popular">
+    <div class="tag">Best Value</div>
+    <div class="top"><div class="name">ICM Cloud + API</div><div class="price">₹2,999 <span>/ month</span></div></div>
+    <div class="desc">Everything in Cloud plus API access for your own apps. 10K queries included.</div>
+    <ul>
+      <li>All Cloud features</li>
+      <li>10,000 memory queries/mo</li>
+      <li>REST API + SDK</li>
+      <li>Works with any LLM</li>
+    </ul>
+    <a id="combo-link" href="https://rzp.io/PLACEHOLDER_COMBO" class="btn primary" target="_blank">Subscribe via Razorpay →</a>
+  </div>
+
+  <div class="plan-box">
+    <div class="top"><div class="name">API Only</div><div class="price">₹2,419 <span>/ month</span></div></div>
+    <div class="desc">Add infinite memory to your own AI app. No GPT-4 included.</div>
+    <ul>
+      <li>10,000 memory queries/mo</li>
+      <li>REST API + SDK</li>
+      <li>Works with any LLM</li>
+      <li>99.9% uptime SLA</li>
+    </ul>
+    <a id="api-link" href="https://rzp.io/PLACEHOLDER_API" class="btn outline" target="_blank">Subscribe via Razorpay →</a>
+  </div>
+
+  <div class="payment-methods">
+    <span>UPI</span> <span>GPay</span> <span>PhonePe</span> <span>Credit Card</span> <span>Debit Card</span> <span>Net Banking</span>
+  </div>
+
+  <div class="setup-guide">
+    <h3>⚙️ Setup Instructions</h3>
+    <p>You need a Razorpay account to receive payments:</p>
+    <ol>
+      <li>Sign up at <a href="https://razorpay.com" target="_blank">razorpay.com</a> (free, Indian business docs needed)</li>
+      <li>Go to <strong>Payment Links</strong> → Create a new link</li>
+      <li>Set amount: ₹1,249 for Cloud, ₹2,419 for API, ₹2,999 for Combo</li>
+      <li>Enable recurring (subscription) if you want monthly billing</li>
+      <li>Copy the Payment Link URLs</li>
+      <li>Update them in <code>checkout.html</code> (search <code>PLACEHOLDER</code>)</li>
+    </ol>
+    <p>For automatic subscription management, deploy the <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">server component</a> with Razorpay webhooks.</p>
+    <p style="margin-top:8px">Questions? <a href="mailto:hello@icm-llm.com">Email us</a>.</p>
+  </div>
+</div>
+<footer>
+  <a href="index.html">Home</a> · <a href="api.html">API</a> · Powered by Razorpay
+</footer>
+</body>
+</html>

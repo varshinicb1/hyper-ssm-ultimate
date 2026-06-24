@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg3)"/>
+
+  <!-- Web page mockup -->
+  <rect x="40" y="30" width="720" height="540" rx="8" fill="#fff" stroke="#ddd" stroke-width="1"/>
+
+  <!-- Page content -->
+  <text x="400" y="80" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="#333" font-weight="bold">My Research Notes</text>
+  <text x="60" y="130" font-family="system-ui, sans-serif" font-size="14" fill="#555">The Hyperbolic Memory Tree is a novel approach to</text>
+  <text x="60" y="155" font-family="system-ui, sans-serif" font-size="14" fill="#555">context management using hyperbolic geometry. It uses</text>
+
+  <!-- Selected text highlight -->
+  <rect x="60" y="172" width="520" height="20" fill="#667eea" opacity="0.2"/>
+  <text x="60" y="187" font-family="system-ui, sans-serif" font-size="14" fill="#222">a tree structure that maintains conversation memory</text>
+  <text x="60" y="205" font-family="system-ui, sans-serif" font-size="14" fill="#555">with 100% recall accuracy across multiple sessions.</text>
+
+  <!-- Right-click context menu -->
+  <rect x="180" y="210" width="260" height="180" rx="6" fill="#1a1a2e" stroke="#667eea" stroke-width="1.5"/>
+  <text x="200" y="238" font-family="system-ui, sans-serif" font-size="12" fill="#ccc">Copy</text>
+  <text x="200" y="262" font-family="system-ui, sans-serif" font-size="12" fill="#ccc">Search Google for "tree structure..."</text>
+  <line x1="190" y1="272" x2="420" y2="272" stroke="#3d3d5c"/>
+  <text x="200" y="293" font-family="system-ui, sans-serif" font-size="12" fill="#667eea" font-weight="bold">📌 Save to AI Memory</text>
+  <line x1="190" y1="303" x2="420" y2="303" stroke="#3d3d5c"/>
+  <text x="200" y="323" font-family="system-ui, sans-serif" font-size="12" fill="#ccc">Print</text>
+  <text x="200" y="347" font-family="system-ui, sans-serif" font-size="12" fill="#ccc">Inspect</text>
+  <text x="200" y="371" font-family="system-ui, sans-serif" font-size="12" fill="#ccc">View page source</text>
+
+  <!-- Tooltip -->
+  <rect x="580" y="240" width="180" height="40" rx="8" fill="#28c840" opacity="0.9"/>
+  <text x="670" y="265" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" font-weight="bold">✓ Saved to Memory!</text>
+
+  <!-- Arrow from menu to tooltip -->
+  <line x1="440" y1="260" x2="575" y2="260" stroke="#28c840" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <!-- Header label -->
+  <rect x="40" y="30" width="720" height="40" rx="8" fill="#f5f5f5"/>
+  <circle cx="65" cy="50" r="5" fill="#ff5f57"/>
+  <circle cx="85" cy="50" r="5" fill="#febc2e"/>
+  <circle cx="105" cy="50" r="5" fill="#28c840"/>
+  <text x="400" y="55" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#999">Any Website</text>
+
+  <!-- Bottom instruction -->
+  <text x="400" y="580" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#888">Right-click any text → Save to AI Memory</text>
+</svg>

@@ -1,0 +1,13 @@
+{
+  "name": "icm-publish",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Publishing scripts for ICM Tool Factory",
+  "scripts": {
+    "publish-chrome": "node scripts/chrome-upload.js",
+    "publish-gumroad": "node scripts/gumroad.js"
+  },
+  "dependencies": {
+    "chrome-webstore-upload": "^3.0.0"
+  }
+}

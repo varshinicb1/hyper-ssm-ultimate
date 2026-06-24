@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0c29"/>
+      <stop offset="50%" stop-color="#302b63"/>
+      <stop offset="100%" stop-color="#24243e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="200" cy="100" r="250" fill="#667eea" opacity="0.05"/>
+  <circle cx="1100" cy="600" r="300" fill="#764ba2" opacity="0.05"/>
+  <circle cx="640" cy="360" r="400" fill="#667eea" opacity="0.03"/>
+
+  <!-- Brain icon (simplified) -->
+  <g transform="translate(640, 280)" filter="url(#glow)" opacity="0.15">
+    <ellipse cx="0" cy="0" rx="120" ry="90" fill="none" stroke="#667eea" stroke-width="3"/>
+    <path d="M-60,-40 Q0,-80 60,-40 Q80,-10 60,20 Q30,60 0,40 Q-30,60 -60,20 Q-80,-10 -60,-40Z" fill="none" stroke="#764ba2" stroke-width="2"/>
+    <line x1="0" y1="-60" x2="0" y2="60" stroke="#667eea" stroke-width="1.5" opacity="0.5"/>
+    <line x1="-50" y1="-20" x2="50" y2="-20" stroke="#667eea" stroke-width="1.5" opacity="0.5"/>
+    <line x1="-50" y1="20" x2="50" y2="20" stroke="#667eea" stroke-width="1.5" opacity="0.5"/>
+  </g>
+
+  <!-- Title -->
+  <text x="640" y="440" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="bold" fill="white" letter-spacing="2">
+    AI Memory
+  </text>
+  <text x="640" y="490" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#b0b0d0" letter-spacing="1">
+    Infinite Context for ChatGPT
+  </text>
+
+  <!-- Feature boxes -->
+  <g transform="translate(140, 540)">
+    <rect width="220" height="100" rx="12" fill="rgba(102,126,234,0.1)" stroke="rgba(102,126,234,0.3)" stroke-width="1"/>
+    <text x="110" y="35" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28">💾</text>
+    <text x="110" y="65" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">Auto-Save</text>
+    <text x="110" y="82" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#888">Every conversation</text>
+  </g>
+  <g transform="translate(410, 540)">
+    <rect width="220" height="100" rx="12" fill="rgba(102,126,234,0.1)" stroke="rgba(102,126,234,0.3)" stroke-width="1"/>
+    <text x="110" y="35" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28">🔍</text>
+    <text x="110" y="65" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">Search</text>
+    <text x="110" y="82" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#888">Instant recall</text>
+  </g>
+  <g transform="translate(680, 540)">
+    <rect width="220" height="100" rx="12" fill="rgba(102,126,234,0.1)" stroke="rgba(102,126,234,0.3)" stroke-width="1"/>
+    <text x="110" y="35" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28">⚡</text>
+    <text x="110" y="65" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">One-Click Inject</text>
+    <text x="110" y="82" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#888">Context into chats</text>
+  </g>
+  <g transform="translate(950, 540)">
+    <rect width="220" height="100" rx="12" fill="rgba(102,126,234,0.1)" stroke="rgba(102,126,234,0.3)" stroke-width="1"/>
+    <text x="110" y="35" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28">🛡️</text>
+    <text x="110" y="65" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">100% Private</text>
+    <text x="110" y="82" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#888">Stays on device</text>
+  </g>
+
+  <!-- Badge -->
+  <g transform="translate(1100, 120)">
+    <rect width="140" height="36" rx="18" fill="#667eea"/>
+    <text x="70" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="white" font-weight="bold">CHROME EXTENSION</text>
+  </g>
+  <g transform="translate(40, 120)">
+    <rect width="80" height="36" rx="18" fill="#764ba2"/>
+    <text x="40" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="white" font-weight="bold">₹299</text>
+  </g>
+</svg>

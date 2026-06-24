@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ICM API — Infinite Context Memory for Developers</title>
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#1e1e2e;--text:#e8e8f0;--text2:#8888a0;--text3:#55556a;--blue:#4a7cff;--green:#22c55e;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SFMono-Regular',Consolas,monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.6}
+a{color:var(--blue);text-decoration:none}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:24px}
+nav .logo{font-size:16px;font-weight:700}
+nav .nav-r{margin-left:auto;display:flex;gap:16px;align-items:center}
+nav .nav-r a{font-size:13px;color:var(--text2)}.sect{padding:100px 24px 60px;max-width:800px;margin:0 auto}
+h1{font-size:28px;font-weight:800;margin-bottom:6px}
+h1 span{background:linear-gradient(135deg,var(--blue),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--text2);margin-bottom:30px}
+h2{font-size:18px;font-weight:700;margin:30px 0 10px;padding-top:10px;border-top:1px solid var(--border)}
+h3{font-size:14px;font-weight:600;margin:20px 0 6px;color:var(--text2)}
+.code{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--text2);margin:8px 0}
+.cm{color:var(--text3)}.kw{color:var(--blue)}.str{color:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+th{text-align:left;padding:6px 10px;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.endpoint{font-family:var(--mono);font-size:12px;background:var(--surface);padding:8px 12px;border-radius:6px;border:1px solid var(--border);margin:8px 0;display:flex;align-items:center;gap:10px}
+.endpoint .method{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px}
+.method.get{background:rgba(74,124,255,.15);color:var(--blue)}
+.method.post{background:rgba(34,197,94,.15);color:var(--green)}
+.method.delete{background:rgba(239,68,68,.15);color:#ef4444}
+.endpoint .path{color:var(--text)}
+.plan-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.plan-box .price{font-size:22px;font-weight:800}
+.plan-box .price span{font-size:13px;font-weight:400;color:var(--text3)}
+.plan-box .btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;background:var(--blue);color:#fff;border:none;cursor:pointer;display:inline-block}
+footer{border-top:1px solid var(--border);padding:24px;text-align:center;font-size:12px;color:var(--text3);margin-top:60px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">ICM <span style="font-size:12px;color:var(--text3);font-weight:400">API</span></div>
+  <div class="nav-r">
+    <a href="index.html">Home</a>
+    <a href="index.html#pricing">Pricing</a>
+    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">GitHub</a>
+  </div>
+</nav>
+
+<section class="sect">
+  <h1>ICM <span>API</span></h1>
+  <p class="sub">Add infinite memory to any AI application. REST API with 100% recall accuracy.</p>
+
+  <div class="plan-box">
+    <div><strong>API Plan</strong><br><span style="font-size:12px;color:var(--text2)">10,000 queries/month, 99.9% uptime</span></div>
+    <div class="price">₹2,419 <span>/ month</span></div>
+    <a href="checkout.html" class="btn">Subscribe</a>
+  </div>
+
+  <h2>Authentication</h2>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Include your API key in the <code style="color:var(--text)">Authorization</code> header:</p>
+  <div class="code">Authorization: Bearer icm_sk_xxxxxxxxxxxxxxxx</div>
+
+  <h2>Endpoints</h2>
+
+  <h3>Save a memory</h3>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/v1/memories</span></div>
+  <div class="code">
+    <span class="cm"># Save a fact to the memory tree</span><br>
+    curl -X POST https://api.icm-llm.com/v1/memories \<br>
+    &nbsp;&nbsp;-H "Authorization: Bearer YOUR_API_KEY" \<br>
+    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+    &nbsp;&nbsp;-d '{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"content": "The secret code is 180X78.",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"topic": "code"<br>
+    &nbsp;&nbsp;}'
+  </div>
+
+  <h3>Recall memories</h3>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/v1/recall</span></div>
+  <div class="code">
+    <span class="cm"># Query memory by topic</span><br>
+    curl -X POST https://api.icm-llm.com/v1/recall \<br>
+    &nbsp;&nbsp;-H "Authorization: Bearer YOUR_API_KEY" \<br>
+    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+    &nbsp;&nbsp;-d '{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"query": "What was the code?",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"top_k": 5<br>
+    &nbsp;&nbsp;}'
+  </div>
+
+  <h3>List all memories</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/v1/memories</span></div>
+
+  <h3>Delete a memory</h3>
+  <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/v1/memories/{id}</span></div>
+
+  <h2>Response Format</h2>
+  <div class="code">
+    {<br>
+    &nbsp;&nbsp;"ok": true,<br>
+    &nbsp;&nbsp;"results": [<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"content": "The secret code is 180X78.",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"topic": "code",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"similarity": 0.97<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;],<br>
+    &nbsp;&nbsp;"latency_ms": 3.7<br>
+    }
+  </div>
+
+  <h2>SDK Integration</h2>
+  <div class="code">
+    <span class="cm"># Python SDK</span><br>
+    pip install icm-llm<br><br>
+    <span class="kw">from</span> icm_api <span class="kw">import</span> ICMClient<br><br>
+    client = ICMClient(api_key="icm_sk_...")<br>
+    client.remember("The secret code is 180X78.", topic="code")<br>
+    results = client.recall("What was the code?")<br>
+    <span class="kw">print</span>(results[0].content)  <span class="cm"># "The secret code is 180X78."</span>
+  </div>
+
+  <h2>Rate Limits</h2>
+  <table>
+    <tr><th>Plan</th><th>Queries/month</th><th>Rate limit</th></tr>
+    <tr><td>API</td><td>10,000</td><td>100 req/min</td></tr>
+    <tr><td>Enterprise</td><td>Unlimited</td><td>Custom</td></tr>
+  </table>
+
+  <h2>Need Help?</h2>
+  <p style="font-size:13px;color:var(--text2)">Email <a href="mailto:hello@icm-llm.com">hello@icm-llm.com</a> or open an issue on <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">GitHub</a>.</p>
+</section>
+
+<footer>
+  <a href="index.html">Home</a> · <a href="index.html#pricing">Pricing</a> · <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">GitHub</a>
+</footer>
+</body>
+</html>
