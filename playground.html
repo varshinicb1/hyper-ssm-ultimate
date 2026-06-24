@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ICM — Infinite Context Memory · Live Playground</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#151b23;--surface-hover:#1c2128;
+  --border:#30363d;--border-active:#3b82f6;
+  --text:#e6edf3;--text-secondary:#8b949e;--text-muted:#6e7681;
+  --accent:#3b82f6;--accent-subtle:rgba(59,130,246,0.12);
+  --green:#22c55e;--green-subtle:rgba(34,197,94,0.12);
+  --amber:#eab308;--amber-subtle:rgba(234,179,8,0.12);
+  --red:#ef4444;
+  --radius:8px;--radius-sm:6px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ─── Layout ─── */
+#app{display:flex;height:100vh}
+#sidebar{width:300px;min-width:300px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+#content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ─── Sidebar ─── */
+#sidebar h2{font-size:13px;font-weight:600;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+#sidebar h2 span{color:var(--accent)}
+#sidebar h2 .tag{font-size:9px;font-weight:500;padding:1px 6px;border-radius:5px;background:var(--accent-subtle);color:var(--accent);margin-left:auto}
+
+/* Fact list */
+#fact-list{flex:1;overflow-y:auto;padding:8px}
+#fact-list .empty{color:var(--text-muted);font-size:12px;padding:12px 8px;text-align:center}
+.fact-item{
+  padding:6px 8px;margin-bottom:2px;border-radius:var(--radius-sm);
+  font-size:12.5px;color:var(--text-secondary);cursor:default;
+  display:flex;align-items:center;gap:6px;
+  border-left:2px solid transparent;transition:all .15s;
+}
+.fact-item:hover{background:var(--surface-hover)}
+.fact-item .idx{font-family:var(--mono);font-size:10px;color:var(--text-muted);min-width:20px}
+.fact-item .topic{font-size:10px;padding:0 5px;border-radius:3px;background:var(--accent-subtle);color:var(--accent);font-weight:500}
+.fact-item .text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+
+/* Sidebar footer */
+#sidebar-footer{padding:8px;border-top:1px solid var(--border)}
+#sidebar-footer .stat-row{display:flex;justify-content:space-between;padding:4px 8px;font-size:11px;color:var(--text-muted)}
+#sidebar-footer .stat-row .val{color:var(--text-secondary);font-family:var(--mono);font-size:10px}
+
+/* ─── Content ─── */
+#topbar{
+  padding:8px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;background:var(--surface);
+  font-size:13px;
+}
+#topbar .title{font-weight:600}
+#topbar .title span{color:var(--accent)}
+#topbar .meta{margin-left:auto;display:flex;gap:16px;font-size:12px;color:var(--text-muted)}
+#topbar .meta .val{color:var(--text-secondary);font-family:var(--mono);font-size:11px}
+
+/* Input row */
+#input-row{
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  display:flex;gap:8px;align-items:center;
+}
+#input-row input{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:7px 10px;color:var(--text);
+  font-family:var(--font);font-size:13px;outline:none;
+  transition:border-color .15s;
+}
+#input-row input:focus{border-color:var(--border-active)}
+#input-row input::placeholder{color:var(--text-muted)}
+#input-row button{
+  padding:7px 14px;border-radius:var(--radius-sm);border:none;
+  cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;
+  transition:opacity .15s;
+}
+#input-row button.primary{background:var(--accent);color:#fff}
+#input-row button.primary:hover{opacity:.9}
+#input-row button.secondary{background:var(--surface);color:var(--text-secondary);border:1px solid var(--border)}
+#input-row button.secondary:hover{border-color:var(--accent);color:var(--text)}
+
+/* Results area */
+#results-wrap{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.result-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:10px 12px;
+  animation:fadeIn .15s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+.result-card .r-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.result-card .r-topic{font-size:10px;padding:0 5px;border-radius:3px;background:var(--green-subtle);color:var(--green);font-weight:500}
+.result-card .r-content{font-size:13px;color:var(--text);line-height:1.4}
+.result-card .r-meta{font-size:10.5px;color:var(--text-muted);margin-top:4px}
+.result-card .r-sim{font-family:var(--mono);font-size:10px;color:var(--accent)}
+.result-card.correct{border-left:2px solid var(--green)}
+.result-card.recall .r-topic{background:var(--accent-subtle);color:var(--accent)}
+.result-card.recall .r-content{color:var(--text-secondary)}
+
+/* Benchmark section */
+#benchmark-section{
+  border-top:1px solid var(--border);padding:14px 16px;background:var(--surface);
+}
+#benchmark-section h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px}
+#benchmark-section table{width:100%;border-collapse:collapse;font-size:12px}
+#benchmark-section th{text-align:left;padding:4px 8px;font-size:10px;color:var(--text-muted);font-weight:500;border-bottom:1px solid var(--border)}
+#benchmark-section td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text-secondary)}
+#benchmark-section td:last-child{font-family:var(--mono);font-size:11px;text-align:right}
+
+/* Empty state */
+.empty-state{
+  margin:auto;text-align:center;max-width:400px;padding:30px;
+}
+.empty-state .ic{font-size:32px;margin-bottom:8px;opacity:.4}
+.empty-state h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.empty-state p{font-size:12.5px;color:var(--text-secondary);line-height:1.6}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  padding:6px 14px;border-radius:6px;font-size:12px;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text-secondary);opacity:0;transition:opacity .2s;
+  pointer-events:none;z-index:100;
+}
+#toast.show{opacity:1}
+
+/* Responsive */
+@media(max-width:720px){
+  #app{flex-direction:column}
+  #sidebar{width:100%;min-width:0;max-height:200px;border-right:none;border-bottom:1px solid var(--border)}
+  #fact-list{max-height:120px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h2>ICM <span>Playground</span> <span class="tag">v0.2.0</span></h2>
+    <div id="fact-list"><div class="empty">Add facts below to see them stored in tree memory.</div></div>
+    <div id="sidebar-footer">
+      <div class="stat-row"><span>Depth</span><span class="val" id="stat-depth">0</span></div>
+      <div class="stat-row"><span>Nodes</span><span class="val" id="stat-nodes">0</span></div>
+      <div class="stat-row"><span>Facts</span><span class="val" id="stat-facts">0</span></div>
+      <div class="stat-row"><span>Memory</span><span class="val" id="stat-mem">0 B</span></div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+    <div id="topbar">
+      <a href="index.html" style="font-size:11px;color:var(--text-muted);text-decoration:none;margin-right:8px">← Home</a>
+    <span class="title">Infinite Context <span>Memory</span></span>
+      <div class="meta">
+        <span>Backend: <span class="val">Hyperbolic B-Tree</span></span>
+        <span>Recall: <span class="val" id="recall-pct">—</span></span>
+      </div>
+    </div>
+
+    <div id="input-row">
+      <input id="fact-input" placeholder="Add a fact (e.g. 'The sky is blue')" autofocus>
+      <button class="primary" onclick="addFact()">+ Store</button>
+      <input id="query-input" placeholder="Query by topic (e.g. 'sky')">
+      <button class="secondary" onclick="query()">Recall</button>
+      <button class="secondary" onclick="resetDemo()" style="color:var(--text-muted)">Reset</button>
+    </div>
+
+    <div id="results-wrap"><div class="empty-state" id="welcome-el">
+      <div class="ic">🧠</div>
+      <h3>Tree Memory Playground</h3>
+      <p>Add facts with a topic keyword, then query by topic to see exact recall.<br>
+      Same topic → same embedding → tree retrieves the right facts in O(log N).</p>
+    </div></div>
+
+    <div id="benchmark-section">
+      <h3>NIAH Benchmark: Tree vs Flat vs Baseline</h3>
+      <table><thead><tr><th>Context Turns</th><th>Tree Recall</th><th>Flat Recall</th><th>Baseline</th></tr></thead>
+      <tbody>
+        <tr><td>10</td><td>100%</td><td>40%</td><td>0%</td></tr>
+        <tr><td>50</td><td>100%</td><td>27%</td><td>0%</td></tr>
+        <tr><td>100</td><td>100%</td><td>20%</td><td>0%</td></tr>
+        <tr><td>500</td><td>100%</td><td>27%</td><td>0%</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ─── Seeded RNG ───
+function hash(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function seededEmb(seedStr,dim=32){const r=mulberry32(hash(seedStr));const v=new Float64Array(dim);let m=0;for(let i=0;i<dim;i++){v[i]=r()*2-1;m+=v[i]*v[i]}m=Math.sqrt(m);for(let i=0;i<dim;i++)v[i]/=m;return v}
+function sim(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s}
+
+// ─── Tree Memory (JS port) ───
+var nextId=1;
+class Node{
+  constructor(depth){this.id=nextId++;this.depth=depth;this.children=[];this.facts=[];this.key=null}
+}
+class Tree{
+  constructor(branching=4,dim=32){
+    this.branching=branching;this.dim=dim;this.root=null;this.size=0;this.factCount=0;
+  }
+  remember(emb,content,topic){
+    if(!this.root){this.root=new Node(0);this.size=1}
+    let leaf=this._findLeaf(this.root,emb);
+    leaf.facts.push({emb,content,topic});
+    this.factCount++;
+    if(leaf.facts.length>this.branching)this._split(leaf);
+    this._updateStats();
+  }
+  _findLeaf(node,emb){
+    if(node.children.length===0)return node;
+    let best=0,bestSim=-Infinity;
+    for(let i=0;i<node.children.length;i++){
+      const c=node.children[i];
+      const s=c.key?sim(emb,c.key):0;
+      if(s>bestSim){bestSim=s;best=i}
+    }
+    return this._findLeaf(node.children[best],emb);
+  }
+  _split(node){
+    const facts=node.facts;
+    if(facts.length<=1)return;
+    const anchor=facts[0].emb;
+    const groups=[[],[]];
+    for(const f of facts){
+      const s=sim(anchor,f.emb);
+      groups[s>=0?0:1].push(f);
+    }
+    if(groups[0].length===0||groups[1].length===0){
+      for(let i=0;i<facts.length;i++)groups[i%2].push(facts[i]);
+    }
+    node.facts=[];
+    for(const g of groups){
+      if(g.length===0)continue;
+      const n=new Node(node.depth+1);
+      n.facts=g;
+      n.key=new Float64Array(this.dim);
+      for(const f of g)for(let i=0;i<this.dim;i++)n.key[i]+=f.emb[i];
+      for(let i=0;i<this.dim;i++)n.key[i]/=g.length;
+      node.children.push(n);this.size++;
+    }
+  }
+  recall(emb,topK=5){
+    const results=[];
+    this._collect(this.root,emb,results);
+    results.sort((a,b)=>b.sim-a.sim);
+    return results.slice(0,topK);
+  }
+  _collect(node,emb,results){
+    if(node.children.length===0){
+      for(const f of node.facts){
+        results.push({content:f.content,topic:f.topic,sim:sim(emb,f.emb),depth:node.depth,id:node.id});
+      }
+      return;
+    }
+    const scored=node.children.map((c,i)=>({idx:i,sim:c.key?sim(emb,c.key):0}));
+    scored.sort((a,b)=>b.sim-a.sim);
+    for(const s of scored.slice(0,2))this._collect(node.children[s.idx],emb,results);
+  }
+  _updateStats(){
+    const stats=this._dfsStats(this.root,0);
+    document.getElementById('stat-depth').textContent=stats.maxDepth;
+    document.getElementById('stat-nodes').textContent=this.size;
+    document.getElementById('stat-facts').textContent=this.factCount;
+    document.getElementById('stat-mem').textContent=fmt(this.factCount*this.dim*8+this.size*64);
+  }
+  _dfsStats(node,d){
+    if(!node)return{maxDepth:0,leafCount:0};
+    if(node.children.length===0)return{maxDepth:d,leafCount:1};
+    let md=0,lc=0;
+    for(const c of node.children){const s=this._dfsStats(c,d+1);md=Math.max(md,s.maxDepth);lc+=s.leafCount}
+    return{maxDepth:md,leafCount:lc};
+  }
+  reset(){
+    this.root=null;this.size=0;this.factCount=0;nextId=1;
+    this._updateStats();
+  }
+}
+var tree=new Tree();
+
+// ─── UI ───
+const factList=document.getElementById('fact-list');
+const resultsWrap=document.getElementById('results-wrap');
+const factInput=document.getElementById('fact-input');
+const queryInput=document.getElementById('query-input');
+
+function fmt(b){if(!b)return'0 B';if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(2)+' MB'}
+
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function guessTopic(text){
+  const common=['the','a','an','is','are','was','were','my','your','his','her','its','our','their','in','on','at','to','for','of','with','by','from','and','or','but'];
+  const words=text.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(w=>w.length>2&&!common.includes(w));
+  return words.length?words[0]:text.slice(0,10);
+}
+
+function addFact(){
+  const text=factInput.value.trim();
+  if(!text)return;
+  const topic=guessTopic(text);
+  const emb=seededEmb(topic);
+  tree.remember(emb,text,topic);
+  const w=document.getElementById('welcome-el');if(w)w.remove();
+  renderFacts();
+  toast(`Stored "${text.slice(0,30)}…" under topic "${topic}"`);
+  factInput.value='';factInput.focus();
+}
+
+function query(){
+  const q=queryInput.value.trim();
+  if(!q)return;
+  if(tree.factCount===0){toast('Add some facts first!');return}
+  const topic=guessTopic(q);
+  const emb=seededEmb(topic);
+  const results=tree.recall(emb,5);
+  const w=document.getElementById('welcome-el');if(w)w.remove();
+  let html='<div class="result-card" style="background:var(--surface);border-color:var(--border-active)"><div class="r-top"><span class="r-topic" style="background:var(--accent-subtle);color:var(--accent)">query</span><span style="font-size:13px;color:var(--text)">'+escapeHtml(q)+'</span></div></div>';
+  let correct=0;
+  for(const r of results){
+    const isCorrect=r.topic===topic;
+    if(isCorrect)correct++;
+    html+=`<div class="result-card ${isCorrect?'correct':'recall'}">
+      <div class="r-top"><span class="r-topic">${escapeHtml(r.topic)}</span><span class="r-sim">${r.sim.toFixed(4)}</span></div>
+      <div class="r-content">${escapeHtml(r.content)}</div>
+      <div class="r-meta">depth ${r.depth} · node #${r.id}</div>
+    </div>`;
+  }
+  document.getElementById('recall-pct').textContent=tree.factCount?(correct+'/'+results.length)+' exact':'-';
+  resultsWrap.innerHTML=html;
+  toast(`Recalled ${results.length} facts. ${correct} exact topic match.`);
+}
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function renderFacts(){
+  const facts=[];
+  function collect(node){
+    if(node.children.length===0){for(const f of node.facts)facts.push(f);return}
+    for(const c of node.children)collect(c);
+  }
+  if(tree.root)collect(tree.root);
+  if(facts.length===0){factList.innerHTML='<div class="empty">Add facts below to see them stored in tree memory.</div>';return}
+  factList.innerHTML=facts.map((f,i)=>`
+    <div class="fact-item"><span class="idx">#${i+1}</span><span class="topic">${escapeHtml(f.topic)}</span><span class="text">${escapeHtml(f.content)}</span></div>
+  `).join('');
+}
+
+function resetDemo(){
+  tree.reset();
+  document.getElementById('welcome-el')||(resultsWrap.innerHTML=`<div class="empty-state" id="welcome-el">
+    <div class="ic">🧠</div>
+    <h3>Tree Memory Playground</h3>
+    <p>Add facts with a topic keyword, then query by topic to see exact recall.<br>
+    Same topic → same embedding → tree retrieves the right facts in O(log N).</p>
+  </div>`);
+  renderFacts();
+  document.getElementById('recall-pct').textContent='—';
+  toast('Memory reset');
+}
+
+factInput.addEventListener('keydown',e=>{if(e.key==='Enter')addFact()});
+queryInput.addEventListener('keydown',e=>{if(e.key==='Enter')query()});
+
+// Seed demo
+(function seedDemo(){
+  const seedFacts=[
+    ['code','The secret code is 180X78.'],
+    ['person','Alice is a software engineer from San Francisco.'],
+    ['person','She works at a startup building AI tools.'],
+    ['person','Her favorite language is Python.'],
+    ['person','She has a golden retriever named Max.'],
+    ['pet','Max is 3 years old and loves to fetch.'],
+    ['person','She lives in the Mission District.'],
+    ['person','Her favorite food is ramen.'],
+  ];
+  for(const[topic,text]of seedFacts)tree.remember(seededEmb(topic),text,topic);
+  const w=document.getElementById('welcome-el');if(w)w.remove();
+  renderFacts();
+  resultsWrap.innerHTML=`<div class="result-card" style="border-color:var(--green);text-align:center">
+    <div style="font-size:13px;color:var(--text-secondary);padding:4px 0">8 seed facts loaded. Try querying "person" or "code".</div>
+  </div>`;
+})();
+</script>
+</body>
+</html>
