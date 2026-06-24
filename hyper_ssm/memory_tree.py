@@ -739,6 +739,8 @@ class HyperbolicMemoryTree:
                 data["proj"] = _to_numpy(node.proj).tolist()
             nodes_data[str(nid)] = data
         
+        actual_depth = max((n["depth"] for n in nodes_data.values()), default=0)
+
         return {
             "state_dim": self.state_dim,
             "embed_dim": self.embed_dim,
@@ -748,6 +750,8 @@ class HyperbolicMemoryTree:
             "merge_threshold": self.merge_threshold,
             "root_id": self._root_id,
             "node_counter": self._node_counter,
+            "size": len(nodes_data),
+            "depth": actual_depth,
             "nodes": nodes_data,
             "input_proj": _to_numpy(self._input_proj).tolist(),
             "importance_w": _to_numpy(self._importance_w).tolist(),
