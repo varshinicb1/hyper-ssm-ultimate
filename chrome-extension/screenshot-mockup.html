@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Screenshot 1 - Memory Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.mockup{width:1100px;background:#21262d;border-radius:12px;overflow:hidden;position:relative}
+.mockup-header{background:#161b22;padding:12px 16px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px}
+.mockup-header .dots{display:flex;gap:6px}
+.mockup-header .dot{width:12px;height:12px;border-radius:50%}
+.mockup-header .dot.r{background:#ff5f57}
+.mockup-header .dot.y{background:#ffbd2e}
+.mockup-header .dot.g{background:#28c840}
+.mockup-header .title{font-size:13px;color:#8b949e;margin-left:12px}
+.mockup-body{display:flex;height:650px}
+.chat-panel{flex:1;padding:20px;overflow-y:auto;background:#0d1117;position:relative}
+.message{display:flex;gap:10px;margin-bottom:16px;max-width:80%}
+.message.user{margin-left:auto;flex-direction:row-reverse}
+.message .avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.message.user .avatar{background:#4a7cff;color:#fff}
+.message.ai .avatar{background:#1a1a2e;color:#22c55e;border:1px solid #30363d}
+.message .bubble{background:#151b23;border:1px solid #30363d;border-radius:12px;padding:10px 14px;font-size:13px;color:#e6edf3;line-height:1.5}
+.message.user .bubble{background:rgba(74,124,255,.12);border-color:rgba(74,124,255,.3)}
+.message .check{font-size:10px;color:#22c55e;margin-left:4px;opacity:.7}
+.memory-panel{width:320px;background:#151b23;border-left:1px solid #30363d;display:flex;flex-direction:column}
+.panel-header{padding:14px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between;align-items:center}
+.panel-header h3{font-size:13px;font-weight:600;color:#e6edf3}
+.panel-close{color:#8b949e;cursor:pointer;font-size:16px}
+.panel-search{padding:10px 14px;border-bottom:1px solid #30363d}
+.panel-search input{width:100%;padding:7px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#e6edf3;font-size:12px;outline:none}
+.panel-results{padding:10px 14px;flex:1;overflow-y:auto}
+.mem-item{padding:8px 10px;margin-bottom:6px;border-radius:6px;border:1px solid #30363d;cursor:pointer}
+.mem-item .topic{font-size:10px;font-weight:600;text-transform:uppercase;color:#4a7cff;margin-bottom:2px}
+.mem-item .text{font-size:12px;color:#8b949e}
+.mem-item .sim{font-size:10px;color:#22c55e;margin-top:2px}
+.mem-item.active{border-color:#4a7cff;background:rgba(74,124,255,.08)}
+.panel-inject{padding:10px 14px;border-top:1px solid #30363d}
+.panel-inject button{width:100%;padding:8px;border-radius:6px;border:1px solid #22c55e;background:rgba(34,197,94,.12);color:#22c55e;font-size:12px;font-weight:600;cursor:pointer}
+.floating-btn{position:absolute;bottom:20px;right:20px;width:44px;height:44px;background:linear-gradient(135deg,#4a7cff,#a78bfa);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(74,124,255,.35);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="mockup">
+  <div class="mockup-header">
+    <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    <div class="title">ChatGPT + AI Memory — chatgpt.com</div>
+  </div>
+  <div class="mockup-body">
+    <div class="chat-panel">
+      <div class="message ai"><div class="avatar">AI</div><div class="bubble">Hello! How can I help you today?</div></div>
+      <div class="message user"><div class="avatar">You</div><div class="bubble">Our team uses React, FastAPI, PostgreSQL. I need to remember this for future chats.<span class="check">✓</span></div></div>
+      <div class="message ai"><div class="avatar">AI</div><div class="bubble">Got it! I've noted your tech stack: React, FastAPI, PostgreSQL.</div></div>
+      <div class="message user"><div class="avatar">You</div><div class="bubble">Max from our team suggested setting pool_size=20 to fix the connection timeout.<span class="check">✓</span></div></div>
+      <div class="message ai"><div class="avatar">AI</div><div class="bubble">Good catch. pool_size=20 is a solid fix for PostgreSQL connection pooling.</div></div>
+      <div class="message user"><div class="avatar">You</div><div class="bubble">What's our current stack, and who suggested the pool fix?<span class="check">✓</span></div></div>
+      <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#22c55e">
+        ↻ 2 memories injected from past conversations<br>
+        &nbsp;&nbsp;→ React + FastAPI + PostgreSQL (Chat #1)<br>
+        &nbsp;&nbsp;→ pool_size=20 suggested by Max (Chat #2)
+      </div>
+      <div class="message ai"><div class="avatar">AI</div><div class="bubble">Your stack: <strong>React</strong>, <strong>FastAPI</strong>, <strong>PostgreSQL</strong>. Max suggested <strong>pool_size=20</strong> for connection timeout. What's the issue you're seeing?</div></div>
+      <div class="floating-btn">🧠</div>
+    </div>
+    <div class="memory-panel">
+      <div class="panel-header"><h3>AI Memory</h3><span class="panel-close">✕</span></div>
+      <div class="panel-search"><input placeholder="Search memories..." value="project stack"></div>
+      <div class="panel-results">
+        <div class="mem-item active"><div class="topic">Project Stack</div><div class="text">Our team uses React, FastAPI, PostgreSQL</div><div class="sim">94% match</div></div>
+        <div class="mem-item"><div class="topic">Database Config</div><div class="text">pool_size=20 suggested by Max for connection timeout</div><div class="sim">87% match</div></div>
+        <div class="mem-item"><div class="topic">Repository</div><div class="text">The repo is at github.com/our-project</div><div class="sim">72% match</div></div>
+        <div class="mem-item"><div class="topic">Team Member</div><div class="text">Max works on the backend team, senior engineer</div><div class="sim">65% match</div></div>
+      </div>
+      <div class="panel-inject"><button>Inject 2 Selected Memories</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

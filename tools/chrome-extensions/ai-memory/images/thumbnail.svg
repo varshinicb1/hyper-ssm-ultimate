@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <linearGradient id="bgt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0c29"/>
+      <stop offset="50%" stop-color="#302b63"/>
+      <stop offset="100%" stop-color="#24243e"/>
+    </linearGradient>
+    <linearGradient id="accentt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bgt)" rx="20"/>
+
+  <!-- Decorative -->
+  <circle cx="300" cy="300" r="280" fill="#667eea" opacity="0.03"/>
+
+  <!-- Brain icon -->
+  <g transform="translate(300, 220)">
+    <ellipse cx="0" cy="0" rx="80" ry="55" fill="none" stroke="url(#accentt)" stroke-width="3"/>
+    <path d="M-40,-25 Q0,-55 40,-25 Q55,-5 40,15 Q20,40 0,25 Q-20,40 -40,15 Q-55,-5 -40,-25Z" fill="none" stroke="#764ba2" stroke-width="2"/>
+    <circle cx="0" cy="0" r="8" fill="#667eea" opacity="0.3"/>
+    <circle cx="0" cy="0" r="3" fill="#667eea"/>
+  </g>
+
+  <!-- Title -->
+  <text x="300" y="340" text-anchor="middle" font-family="system-ui, sans-serif" font-size="44" font-weight="bold" fill="white" letter-spacing="2">
+    AI Memory
+  </text>
+  <text x="300" y="380" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#b0b0d0" letter-spacing="1">
+    Infinite Context for ChatGPT
+  </text>
+
+  <!-- Feature list -->
+  <g transform="translate(150, 420)">
+    <text x="0" y="0" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">✅ Auto-saves every conversation</text>
+    <text x="0" y="25" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">🔍 Search past chats instantly</text>
+    <text x="0" y="50" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">⚡ One-click context injection</text>
+    <text x="0" y="75" font-family="system-ui, sans-serif" font-size="14" fill="#c0c0e0">🛡️ 100% private (local storage)</text>
+  </g>
+
+  <!-- Pricing badge -->
+  <g transform="translate(300, 540)">
+    <rect x="-60" y="-18" width="120" height="36" rx="18" fill="url(#accentt)"/>
+    <text x="0" y="6" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" fill="white" font-weight="bold">₹299</text>
+  </g>
+
+  <!-- Chrome extension badge -->
+  <g transform="translate(300, 70)">
+    <rect x="-65" y="-15" width="130" height="30" rx="15" fill="#667eea" opacity="0.2"/>
+    <text x="0" y="4" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#667eea">CHROME EXTENSION</text>
+  </g>
+</svg>

@@ -30,3 +30,13 @@ project-aether/
 hyper_ssm_c_code.pt
 icm_quick_demo.py
 demonstrate_hhm.py
+
+# Credentials — never commit API keys
+publish/credentials/*.json
+!publish/credentials/*.example.json
+
+# Extension ZIPs — generated artifacts
+**/*.zip
+
+# Node modules
+publish/node_modules/

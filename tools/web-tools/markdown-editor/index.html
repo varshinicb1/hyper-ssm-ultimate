@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Markdown Editor — Live Preview & Export</title>
+<style>
+:root{--bg:#0d1117;--surface:#151b23;--border:#30363d;--text:#e6edf3;--t2:#8b949e;--t3:#6e7681;--blue:#4a7cff;--green:#22c55e;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SFMono-Regular',Consolas,monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;line-height:1.6}
+header{position:sticky;top:0;z-index:10;background:rgba(13,17,23,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 16px;height:48px;display:flex;align-items:center;gap:12px}
+header .logo{font-size:14px;font-weight:700}header .logo span{color:var(--blue)}
+header nav{margin-left:auto;display:flex;gap:12px}
+header nav a{font-size:12px;color:var(--t2);text-decoration:none}
+header nav a:hover{color:var(--text)}
+.container{max-width:1200px;margin:0 auto;padding:16px;flex:1;width:100%}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}h1 span{color:var(--blue)}
+.desc{color:var(--t2);font-size:12px;margin-bottom:12px}
+.editor-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-height:500px}
+@media(max-width:720px){.editor-wrap{grid-template-columns:1fr}}
+.pane{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.pane-header{padding:6px 10px;font-size:10px;font-weight:600;color:var(--t2);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+textarea{flex:1;background:var(--bg);border:none;color:var(--text);font-family:var(--mono);font-size:13px;padding:12px;resize:none;outline:none;min-height:400px;tab-size:2;line-height:1.6}
+#preview{flex:1;padding:16px;overflow-y:auto;background:var(--bg)}
+#preview h1,#preview h2,#preview h3{font-weight:600;margin:16px 0 8px;line-height:1.3}
+#preview h1{font-size:22px;border-bottom:1px solid var(--border);padding-bottom:6px}
+#preview h2{font-size:18px}#preview h3{font-size:15px}
+#preview p{font-size:14px;margin:8px 0;color:var(--t2)}
+#preview code{background:var(--surface);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--green)}
+#preview pre{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;overflow-x:auto;margin:10px 0}
+#preview pre code{background:none;padding:0}
+#preview ul,#preview ol{padding-left:20px;margin:8px 0;color:var(--t2)}
+#preview li{margin:3px 0}
+#preview blockquote{border-left:3px solid var(--blue);padding:4px 12px;margin:10px 0;color:var(--t2);background:var(--surface);border-radius:0 4px 4px 0}
+#preview a{color:var(--blue)}
+#preview strong{color:var(--text)}
+#preview hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+#preview img{max-width:100%;border-radius:6px}
+.toolbar{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.toolbar button{padding:5px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;font-family:var(--font);cursor:pointer;transition:all .15s}
+.toolbar button:hover{border-color:var(--blue);color:var(--blue)}
+.toolbar button.prim{background:var(--blue);border-color:var(--blue);color:#fff}
+.toolbar button.prim:hover{opacity:.85}
+.buy{text-align:center;margin-top:16px;padding:12px;border-top:1px solid var(--border);font-size:11px;color:var(--t2)}
+.buy a{color:var(--blue);text-decoration:none;font-weight:600}
+footer{border-top:1px solid var(--border);padding:14px;text-align:center;font-size:11px;color:var(--t3)}
+footer a{color:var(--t2);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Markdown <span>Editor</span></div>
+  <nav>
+    <a href="#" onclick="loadSample()">Sample</a>
+    <a href="#" onclick="downloadMD()">Download MD</a>
+    <a href="#" onclick="downloadHTML()">Download HTML</a>
+    <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">GitHub</a>
+    <a href="../index.html">All Tools</a>
+  </nav>
+</header>
+<div class="container">
+  <h1>Markdown <span>Editor</span> with Live Preview</h1>
+  <p class="desc">Write markdown on the left, see rendered HTML on the right. No server. No login. Free.</p>
+  <div class="editor-wrap">
+    <div class="pane">
+      <div class="pane-header">Markdown <span id="word-count" style="font-weight:400;font-size:10px;color:var(--t3)"></span></div>
+      <textarea id="input" placeholder="# Hello World&#10;&#10;Type **markdown** here..."># Hello World
+
+This is **bold** and *italic*.
+
+- List item 1
+- List item 2
+
+> A blockquote
+
+`inline code`
+
+```python
+print("Code block")
+```</textarea>
+    </div>
+    <div class="pane">
+      <div class="pane-header">Preview</div>
+      <div id="preview"></div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="prim" onclick="downloadHTML()">Download HTML</button>
+    <button onclick="downloadMD()">Download MD</button>
+    <button onclick="copyHTML()">Copy HTML</button>
+    <button onclick="copyMD()">Copy MD</button>
+    <button onclick="clearAll()">Clear</button>
+  </div>
+  <div class="buy">
+    ⭐ <a href="https://github.com/varshinicb1/hyper-ssm-ultimate">Star on GitHub</a> ·
+    <a href="https://www.buymeacoffee.com/varshinicb1">Buy Me a Coffee</a>
+  </div>
+</div>
+<footer><a href="../index.html">All Tools</a> · Free · Client-side</footer>
+
+<script>
+const $input = document.getElementById('input');
+const $preview = document.getElementById('preview');
+
+function render() {
+  const md = $input.value;
+  const lines = md.split('\n').filter(l => l.trim()).length;
+  document.getElementById('word-count').textContent = `${lines} lines, ${md.length} chars`;
+  $preview.innerHTML = marked(md);
+}
+
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+function marked(text) {
+  let html = '';
+  const lines = text.split('\n');
+  let inCode = false, codeLang = '';
+  let inList = false, inBlockquote = false;
+  let codeBuffer = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Code block
+    if (line.trim().startsWith('```')) {
+      if (inCode) {
+        html += '<pre><code>' + escapeHtml(codeBuffer.join('\n')) + '</code></pre>\n';
+        codeBuffer = []; inCode = false;
+      } else {
+        codeLang = line.trim().slice(3).trim();
+        inCode = true;
+      }
+      continue;
+    }
+    if (inCode) { codeBuffer.push(line); continue }
+
+    // Headings
+    if (line.startsWith('### ')) { html += '<h3>' + line.slice(4) + '</h3>\n'; continue }
+    if (line.startsWith('## ')) { html += '<h2>' + line.slice(3) + '</h2>\n'; continue }
+    if (line.startsWith('# ')) { html += '<h1>' + line.slice(2) + '</h1>\n'; continue }
+
+    // Blockquote
+    if (line.startsWith('> ')) {
+      html += '<blockquote>' + inline(line.slice(2)) + '</blockquote>\n';
+      continue;
+    }
+
+    // Horizontal rule
+    if (line.trim() === '---' || line.trim() === '***' || line.trim() === '___') {
+      html += '<hr>\n'; continue;
+    }
+
+    // Unordered list
+    if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+      if (!inList) { html += '<ul>\n'; inList = true }
+      html += '<li>' + inline(line.trim().slice(2)) + '</li>\n';
+      if (i+1 >= lines.length || (!lines[i+1].trim().startsWith('- ') && !lines[i+1].trim().startsWith('* '))) {
+        html += '</ul>\n'; inList = false;
+      }
+      continue;
+    }
+
+    // Ordered list
+    if (/^\d+\.\s/.test(line.trim())) {
+      if (!inList) { html += '<ol>\n'; inList = true }
+      html += '<li>' + inline(line.trim().replace(/^\d+\.\s/,'')) + '</li>\n';
+      if (i+1 >= lines.length || !/^\d+\.\s/.test(lines[i+1].trim())) {
+        html += '</ol>\n'; inList = false;
+      }
+      continue;
+    }
+
+    if (inList) { html += '</ul>\n'; inList = false }
+
+    // Empty line
+    if (line.trim() === '') { html += '\n'; continue }
+
+    // Paragraph
+    html += '<p>' + inline(line) + '</p>\n';
+  }
+
+  if (inCode) { html += '<pre><code>' + escapeHtml(codeBuffer.join('\n')) + '</code></pre>\n' }
+  if (inList) { html += '</ul>\n' }
+
+  return html;
+}
+
+function inline(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>')
+    .replace(/!\[(.+?)\]\((.+?)\)/g, '<img src="$2" alt="$1">');
+}
+
+$input.addEventListener('input', render);
+
+function loadSample() {
+  $input.value = `# Markdown Demo
+
+## Text Formatting
+
+This is **bold**, *italic*, and \`inline code\`.
+
+## Lists
+
+- Apples
+- Bananas
+- Oranges
+
+1. First
+2. Second
+3. Third
+
+## Blockquote
+
+> The best way to predict the future is to invent it.
+
+## Code
+
+\`\`\`python
+def hello():
+    print("Hello, world!")
+\`\`\`
+
+## Links & Images
+
+[GitHub](https://github.com)
+
+---
+
+*Write your own content above.*`;
+  render();
+}
+
+function downloadMD() {
+  const b = new Blob([$input.value], {type:'text/markdown'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'document.md'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function downloadHTML() {
+  const full = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Document</title><style>body{font-family:-apple-system,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.6}pre{background:#f4f4f4;padding:12px;border-radius:6px;overflow-x:auto}code{background:#f4f4f4;padding:2px 5px;border-radius:3px}blockquote{border-left:3px solid #4a7cff;padding:4px 12px;margin:10px 0;color:#666}img{max-width:100%}</style></head><body>${$preview.innerHTML}</body></html>`;
+  const b = new Blob([full], {type:'text/html'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'document.html'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function copyMD() { navigator.clipboard.writeText($input.value) }
+function copyHTML() { navigator.clipboard.writeText($preview.innerHTML) }
+function clearAll() { $input.value = ''; render() }
+
+render();
+</script>
+</body>
+</html>
